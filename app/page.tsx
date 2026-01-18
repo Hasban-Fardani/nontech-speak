@@ -36,9 +36,7 @@ export default function LandingPage() {
 								Plain English
 							</h1>
 							<p className="mx-auto max-w-[700px] text-gray-500 md:text-xl dark:text-gray-400 leading-relaxed">
-								Stop confusing your parents, partners, and friends. Instantly
-								translate complex technical concepts into simple analogies
-								anyone can understand.
+								Translate complex technical ideas into everyday analogies your parents, partners, friends — and even your boss — can actually understand.
 							</p>
 							<div className="space-x-4 pt-4">
 								<Link href="/register">
