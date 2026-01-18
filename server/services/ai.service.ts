@@ -9,93 +9,107 @@ import { decrypt } from "./encryption.service";
 export type AudienceType = "parent" | "partner" | "friend" | "child" | "boss";
 
 const audiencePrompts: Record<AudienceType, string> = {
-	parent:
-		"You are explaining to a parent who has no technical background. Use simple, everyday analogies and avoid jargon completely.",
-	partner:
-		"You are explaining to a romantic partner who is curious but not technical. Use relatable examples and keep it conversational.",
-	friend:
-		"You are explaining to a friend who is interested but not in tech. Use casual language and fun analogies.",
-	child:
-		"You are explaining to a 10-year-old child. Use very simple words, fun examples, and make it easy to understand.",
-	boss: "You are explaining to your boss or superior at work who may not be technical. Use professional language, business analogies, and focus on impact and outcomes.",
+  parent:
+    "You are explaining to a parent who has no technical background. Use simple, everyday analogies and avoid jargon completely.",
+  partner:
+    "You are explaining to a romantic partner who is curious but not technical. Use relatable examples and keep it conversational.",
+  friend:
+    "You are explaining to a friend who is interested but not in tech. Use casual language and fun analogies.",
+  child:
+    "You are explaining to a 10-year-old child. Use very simple words, fun examples, and make it easy to understand.",
+  boss: "You are explaining to your boss or superior at work who may not be technical. Use professional language, business analogies, and focus on impact and outcomes.",
 };
 
 // Utility to get API Key - prioritize user's key over env
 async function getApiKey(
-	userId?: string,
+  userId?: string,
 ): Promise<{ apiKey: string; hasUserKey: boolean }> {
-	// If userId provided, try to get user's API key
-	if (userId) {
-		try {
-			const [user] = await db
-				.select({ geminiApiKey: users.geminiApiKey })
-				.from(users)
-				.where(eq(users.id, userId))
-				.limit(1);
+  // If userId provided, try to get user's API key
+  if (userId) {
+    try {
+      const [user] = await db
+        .select({ geminiApiKey: users.geminiApiKey })
+        .from(users)
+        .where(eq(users.id, userId))
+        .limit(1);
 
-			if (user?.geminiApiKey) {
-				// Decrypt and return user's key
-				return {
-					apiKey: decrypt(user.geminiApiKey),
-					hasUserKey: true,
-				};
-			}
-		} catch (error) {
-			console.error("Error fetching user API key:", error);
-			throw error;
-		}
-	}
+      if (user?.geminiApiKey) {
+        // Decrypt and return user's key
+        return {
+          apiKey: decrypt(user.geminiApiKey),
+          hasUserKey: true,
+        };
+      }
+    } catch (error) {
+      console.error("Error fetching user API key:", error);
+      throw error;
+    }
+  }
 
-	// Fall back to environment variable
-	return {
-		apiKey: process.env.GOOGLE_AI_API_KEY || process.env.GEMINI_API_KEY || "",
-		hasUserKey: false,
-	};
+  // Fall back to environment variable
+  return {
+    apiKey: process.env.GOOGLE_AI_API_KEY || process.env.GEMINI_API_KEY || "",
+    hasUserKey: false,
+  };
 }
 
 export async function translateTechnicalText(
-	technicalText: string,
-	audienceType: AudienceType,
-	model: string = "gemini-2.0-flash",
-	userId?: string,
+  technicalText: string,
+  audienceType: AudienceType,
+  model: string = "gemini-2.0-flash",
+  userId?: string,
 ) {
-	// Get API key and check if user has their own
-	const { apiKey, hasUserKey } = await getApiKey(userId);
+  // Get API key and check if user has their own
+  const { apiKey, hasUserKey } = await getApiKey(userId);
 
-	// Validate model is allowed
-	if (!isModelAllowed(model, hasUserKey)) {
-		throw new Error(
-			`Model ${model} is not available. Please use your own API key in Settings to access Pro models, or use Flash models (gemini-2.0-flash, gemini-2.5-flash, gemini-3-flash-preview).`,
-		);
-	}
+  // Validate model is allowed
+  if (!isModelAllowed(model, hasUserKey)) {
+    throw new Error(
+      `Model ${model} is not available. Please use your own API key in Settings to access Pro models, or use Flash models (gemini-2.0-flash, gemini-2.5-flash, gemini-3-flash-preview).`,
+    );
+  }
 
-	const systemPrompt = `${audiencePrompts[audienceType]}
+  const systemPrompt = `${audiencePrompts[audienceType]}
 
-Your task is to take technical concepts and explain them in a way that is:
-1. Easy to understand for the target audience
-2. Accurate but simplified
-3. Engaging and relatable
-4. Free of technical jargon
+Your task is to take technical concepts and explain them clearly.
 
-Keep the explanation concise (2-3 paragraphs maximum).`;
+STRICT RULES (MUST FOLLOW):
+- Start immediately with the explanation content
+- Do NOT include any opening phrases like "Okay", "Sure", "Here’s", "Let me explain"
+- Do NOT repeat yourself
+- Do NOT restate the question or task
+- Write clean final output only
+- If you repeat any sentence, you will be penalized
 
-	const stream = chat({
-		adapter: createGeminiChat(
-			model as
-				| "gemini-2.0-flash"
-				| "gemini-2.5-flash"
-				| "gemini-3-flash-preview",
-			apiKey,
-		),
-		messages: [
-			{
-				role: "user",
-				content: `${systemPrompt}\n\nExplain this technical concept: ${technicalText}`,
-			},
-		],
-	});
+Output requirements:
+- Easy to understand for the target audience
+- Accurate but simplified
+- Engaging and relatable
+- Free of technical jargon
+- 2–3 short paragraphs maximum`;
 
-	return stream;
+  const stream = chat({
+    adapter: createGeminiChat(
+      model as
+      | "gemini-2.0-flash"
+      | "gemini-2.5-flash"
+      | "gemini-3-flash-preview",
+      apiKey,
+    ),
+    messages: [
+      {
+        role: "tool",
+        content: systemPrompt,
+      },
+      {
+        role: "user",
+        // OUTPUT PRIMER: force model to start directly
+        content: `${technicalText}\n\nStart your answer directly:`,
+      },
+    ],
+  });
+
+  return stream;
 }
 
 /**
@@ -104,16 +118,16 @@ Keep the explanation concise (2-3 paragraphs maximum).`;
  * Need to verify correct format for audio input in TanStack AI Gemini adapter
  */
 export async function transcribeAudio(
-	_audioBase64: string,
-	_mimeType: string,
+  _audioBase64: string,
+  _mimeType: string,
 ): Promise<string> {
-	// Temporary implementation - return placeholder
-	// Will implement proper Gemini audio transcription after verifying types
-	throw new Error(
-		"Audio transcription not yet implemented - type issues to resolve",
-	);
+  // Temporary implementation - return placeholder
+  // Will implement proper Gemini audio transcription after verifying types
+  throw new Error(
+    "Audio transcription not yet implemented - type issues to resolve",
+  );
 
-	/*
+  /*
   const stream = chat({
     adapter: createGeminiChat("gemini-2.0-flash", await getApiKey(userId)),
     messages: [
@@ -148,11 +162,11 @@ export async function transcribeAudio(
 }
 
 export async function evaluatePractice(
-	userExplanation: string,
-	challengePrompt?: string,
-	userId?: string,
+  userExplanation: string,
+  challengePrompt?: string,
+  userId?: string,
 ) {
-	const systemPrompt = `You are an expert at evaluating how well someone explains technical concepts to non-technical audiences.
+  const systemPrompt = `You are an expert at evaluating how well someone explains technical concepts to non-technical audiences.
 
 Evaluate the explanation based on:
 1. Clarity (0-25 points): Is it easy to understand?
@@ -171,22 +185,22 @@ Required JSON structure:
 - strengths: array of 2-3 strings
 - improvements: array of 2-3 strings`;
 
-	const prompt = challengePrompt
-		? `Challenge: ${challengePrompt}\n\nUser's explanation: ${userExplanation}\n\nRespond with ONLY the JSON object, nothing else.`
-		: `Evaluate this explanation: ${userExplanation}\n\nRespond with ONLY the JSON object, nothing else.`;
+  const prompt = challengePrompt
+    ? `Challenge: ${challengePrompt}\n\nUser's explanation: ${userExplanation}\n\nRespond with ONLY the JSON object, nothing else.`
+    : `Evaluate this explanation: ${userExplanation}\n\nRespond with ONLY the JSON object, nothing else.`;
 
-	// Get API key
-	const { apiKey } = await getApiKey(userId);
+  // Get API key
+  const { apiKey } = await getApiKey(userId);
 
-	const stream = chat({
-		adapter: createGeminiChat("gemini-2.0-flash", apiKey),
-		messages: [
-			{
-				role: "user",
-				content: `${systemPrompt}\n\n${prompt}`,
-			},
-		],
-	});
+  const stream = chat({
+    adapter: createGeminiChat("gemini-2.0-flash", apiKey),
+    messages: [
+      {
+        role: "user",
+        content: `${systemPrompt}\n\n${prompt}`,
+      },
+    ],
+  });
 
-	return stream;
+  return stream;
 }

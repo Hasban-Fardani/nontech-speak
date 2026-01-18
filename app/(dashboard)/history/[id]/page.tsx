@@ -3,90 +3,121 @@
 import {
 	ArrowLeft,
 	Calendar,
-	CheckCircle2,
-	Lightbulb,
-	RefreshCw,
-	Trophy,
+	Globe,
+	Languages,
+	Lock,
+	Share2,
+  ArrowUp,
 } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import * as React from "react";
+import { toast } from "sonner";
+import { ShareButton } from "@/components/molecules/ShareButton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
 	CardContent,
 	CardDescription,
-	CardFooter,
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
 
-type PracticeDetail = {
+type TranslationDetail = {
 	id: string;
 	userId: string;
-	userInput: string;
-	challengePrompt: string;
-	score: number;
-	feedbackText: string;
-	suggestions: string[];
+	technicalText: string;
+	simplifiedText: string;
+	audienceType: string;
+	aiModel: string;
+	isPublic: boolean;
+	viewCount: number;
+	upvotesCount: number;
 	createdAt: string;
 };
 
-export default function PracticeHistoryDetailPage() {
+export default function TranslationHistoryDetailPage() {
 	const params = useParams();
-	// router unused
-	const [practice, setPractice] = React.useState<PracticeDetail | null>(null);
+	const [translation, setTranslation] =
+		React.useState<TranslationDetail | null>(null);
 	const [loading, setLoading] = React.useState(true);
 	const [error, setError] = React.useState<string | null>(null);
+	const [updating, setUpdating] = React.useState(false);
 
 	React.useEffect(() => {
-		async function fetchPractice() {
+		async function fetchTranslation() {
 			try {
-				const res = await fetch(`/api/practice/${params.id}`);
+				const res = await fetch(`/api/translation/${params.id}`);
 				if (res.ok) {
 					const data = await res.json();
-					setPractice(data);
+					setTranslation(data);
 				} else {
-					setError("Failed to load practice details");
+					setError("Translation not found");
 				}
-			} catch (error) {
-				console.error("Failed to fetch practice:", error);
-				setError("Failed to load practice details");
+			} catch (err) {
+				setError("Failed to load translation");
+				console.error(err);
 			} finally {
 				setLoading(false);
 			}
 		}
 
 		if (params.id) {
-			fetchPractice();
+			fetchTranslation();
 		}
 	}, [params.id]);
 
-	const getScoreColor = (score: number) => {
-		if (score >= 80) return "text-green-600 dark:text-green-400";
-		if (score >= 60) return "text-yellow-600 dark:text-yellow-400";
-		return "text-red-600 dark:text-red-400";
-	};
+	const handleVisibilityToggle = async (checked: boolean) => {
+		if (!translation) return;
 
-	const getScoreBadge = (score: number) => {
-		if (score >= 80) return "default";
-		if (score >= 60) return "secondary";
-		return "destructive";
+		setUpdating(true);
+		// Optimistic update
+		const oldStatus = translation.isPublic;
+		setTranslation({ ...translation, isPublic: checked });
+
+		try {
+			const res = await fetch(`/api/translation/${translation.id}/visibility`, {
+				method: "PATCH",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({ isPublic: checked }),
+			});
+
+			if (!res.ok) {
+				throw new Error("Failed to update visibility");
+			}
+
+			toast.success(
+				checked ? "Translation is now public" : "Translation is now private",
+			);
+		} catch (error) {
+			console.error(error);
+			toast.error("Failed to update visibility");
+			// Revert on error
+			setTranslation({ ...translation, isPublic: oldStatus });
+		} finally {
+			setUpdating(false);
+		}
 	};
 
 	if (loading) {
 		return (
-			<div className="max-w-4xl mx-auto space-y-6">
-				<Skeleton className="h-10 w-32" />
+			<div className="space-y-6">
+				<div className="flex items-center gap-4">
+					<Skeleton className="h-10 w-10" />
+					<Skeleton className="h-8 w-48" />
+				</div>
 				<Card>
 					<CardHeader>
 						<Skeleton className="h-6 w-3/4 mb-2" />
 						<Skeleton className="h-4 w-1/2" />
 					</CardHeader>
-					<CardContent className="space-y-4">
-						<Skeleton className="h-24 w-full" />
+					<CardContent>
 						<Skeleton className="h-32 w-full" />
 					</CardContent>
 				</Card>
@@ -94,113 +125,155 @@ export default function PracticeHistoryDetailPage() {
 		);
 	}
 
-	if (error || !practice) {
+	if (error || !translation) {
 		return (
-			<div className="max-w-4xl mx-auto space-y-6">
-				<Button variant="ghost" asChild>
-					<Link href="/history">
+			<div className="space-y-6">
+				<Link href="/history">
+					<Button variant="ghost" size="sm">
 						<ArrowLeft className="mr-2 h-4 w-4" />
 						Back to History
-					</Link>
-				</Button>
+					</Button>
+				</Link>
 				<Card>
 					<CardContent className="flex flex-col items-center justify-center py-12">
-						<p className="text-sm text-muted-foreground">
-							{error || "Practice not found"}
+						<Languages className="h-12 w-12 text-muted-foreground mb-4" />
+						<h3 className="text-lg font-semibold mb-2">
+							{error || "Translation not found"}
+						</h3>
+						<p className="text-sm text-muted-foreground text-center mb-4">
+							This translation may have been deleted or you don't have access to
+							it.
 						</p>
+						<Link href="/history">
+							<Button>Go to History</Button>
+						</Link>
 					</CardContent>
 				</Card>
 			</div>
 		);
 	}
 
-	// Parse suggestions if it's a string array
-	const improvements =
-		typeof practice.suggestions === "string" ? [] : practice.suggestions || [];
-
 	return (
-		<div className="max-w-4xl mx-auto space-y-6">
-			<Button variant="ghost" asChild>
+		<div className="space-y-6">
+			{/* Header */}
+			<div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
 				<Link href="/history">
-					<ArrowLeft className="mr-2 h-4 w-4" />
-					Back to History
+					<Button variant="ghost" size="sm">
+						<ArrowLeft className="mr-2 h-4 w-4" />
+						Back to History
+					</Button>
 				</Link>
-			</Button>
+				<div className="flex flex-col sm:flex-row items-center gap-4 bg-muted/30 p-2 rounded-lg border border-dashed">
+					<div className="flex items-center space-x-2">
+						<Switch
+							id="visibility-mode"
+							checked={translation.isPublic}
+							onCheckedChange={handleVisibilityToggle}
+							disabled={updating}
+						/>
+						<Label
+							htmlFor="visibility-mode"
+							className="flex items-center gap-2 cursor-pointer text-sm font-medium"
+						>
+							{translation.isPublic ? (
+								<>
+									<Globe className="h-3 w-3 text-green-600" />
+									Public
+								</>
+							) : (
+								<>
+									<Lock className="h-3 w-3 text-slate-500" />
+									Private
+								</>
+							)}
+						</Label>
+					</div>
 
-			{/* Challenge Info */}
+					<div className="h-4 w-px bg-border hidden sm:block" />
+
+					<ShareButton id={translation.id} />
+				</div>
+			</div>
+
+			{/* Translation Details */}
 			<Card>
 				<CardHeader>
 					<div className="flex items-start justify-between gap-4">
 						<div className="flex-1">
-							<CardTitle>
-								{practice.challengePrompt || "Practice Challenge"}
+							<CardTitle className="text-2xl mb-2">
+								Translation Details
 							</CardTitle>
-							<CardDescription className="flex items-center gap-2 mt-2">
-								<Calendar className="h-4 w-4" />
-								{new Date(practice.createdAt).toLocaleDateString("en-US", {
-									month: "long",
-									day: "numeric",
-									year: "numeric",
-									hour: "2-digit",
-									minute: "2-digit",
-								})}
+							<CardDescription className="flex items-center gap-4">
+								<span className="flex items-center gap-1">
+									<Calendar className="h-3 w-3" />
+									{new Date(translation.createdAt).toLocaleDateString("en-US", {
+										month: "long",
+										day: "numeric",
+										year: "numeric",
+										hour: "2-digit",
+										minute: "2-digit",
+									})}
+								</span>
+								<Badge variant="outline" className="capitalize">
+									{translation.audienceType}
+								</Badge>
+								<Badge variant="secondary">{translation.aiModel}</Badge>
 							</CardDescription>
 						</div>
-						<Badge variant={getScoreBadge(practice.score)} className="text-lg">
-							<Trophy className="mr-2 h-4 w-4" />
-							<span className={`font-bold ${getScoreColor(practice.score)}`}>
-								{practice.score}/100
-							</span>
-						</Badge>
 					</div>
 				</CardHeader>
-			</Card>
+				<CardContent className="space-y-6">
+					{/* Original Technical Text */}
+					<div>
+						<h3 className="text-sm font-semibold text-muted-foreground mb-2 uppercase tracking-wide">
+							Original Technical Text
+						</h3>
+						<div className="bg-muted/50 rounded-lg p-4">
+							<p className="text-base leading-relaxed">
+								{translation.technicalText}
+							</p>
+						</div>
+					</div>
 
-			{/* Your Explanation */}
-			<Card>
-				<CardHeader>
-					<CardTitle className="text-base">Your Explanation</CardTitle>
-				</CardHeader>
-				<CardContent>
-					<p className="text-sm whitespace-pre-wrap">{practice.userInput}</p>
-				</CardContent>
-			</Card>
+					{/* Simplified Text */}
+					<div>
+						<h3 className="text-sm font-semibold text-muted-foreground mb-2 uppercase tracking-wide">
+							Simplified Explanation
+						</h3>
+						<div className="bg-primary/5 rounded-lg p-4 border border-primary/10">
+							<p className="text-base leading-relaxed">
+								{translation.simplifiedText}
+							</p>
+						</div>
+					</div>
 
-			{/* AI Feedback */}
-			<Card>
-				<CardHeader>
-					<CardTitle className="text-base">AI Feedback</CardTitle>
-				</CardHeader>
-				<CardContent className="space-y-4">
-					<p className="text-sm">{practice.feedbackText}</p>
-
-					{improvements.length > 0 && (
-						<div className="space-y-2">
-							<div className="flex items-center gap-2 text-sm font-medium">
-								<Lightbulb className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
-								Suggestions for Improvement
+					{/* Stats */}
+					{translation.isPublic && (
+						<div className="flex items-center gap-6 pt-4 border-t">
+							<div className="flex items-center gap-2 text-sm text-muted-foreground">
+								<Share2 className="h-4 w-4" />
+								<span>{translation.viewCount} views</span>
 							</div>
-							<ul className="space-y-2">
-								{improvements.map((improvement, idx) => (
-									// biome-ignore lint/suspicious/noArrayIndexKey: List is static strings
-									<li key={idx} className="flex items-start gap-2 text-sm">
-										<CheckCircle2 className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
-										<span>{improvement}</span>
-									</li>
-								))}
-							</ul>
+							<div className="flex items-center gap-2 text-sm text-muted-foreground">
+								<span className="flex items-center gap-2">
+									<ArrowUp className="h-4 w-4" />
+									{translation.upvotesCount} upvotes
+								</span>
+							</div>
 						</div>
 					)}
 				</CardContent>
-				<CardFooter>
-					<Button variant="outline" className="w-full" asChild>
-						<Link href="/practice">
-							<RefreshCw className="mr-2 h-4 w-4" />
-							Try More Challenges
-						</Link>
-					</Button>
-				</CardFooter>
 			</Card>
+
+			{/* Actions */}
+			<div className="flex gap-4">
+				<Link href="/translate" className="flex-1">
+					<Button className="w-full" variant="outline">
+						<Languages className="mr-2 h-4 w-4" />
+						Create New Translation
+					</Button>
+				</Link>
+			</div>
 		</div>
 	);
 }

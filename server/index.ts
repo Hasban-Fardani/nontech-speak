@@ -3,6 +3,7 @@ import { openapi } from "@elysiajs/openapi";
 import { type Context, Elysia } from "elysia";
 import { auth } from "./auth";
 import { audioRoutes } from "./routes/audio";
+import { dashboardRoutes } from "./routes/dashboard";
 import { leaderboardRoutes } from "./routes/leaderboard";
 import { practiceRoutes } from "./routes/practice";
 import { shareRoutes } from "./routes/share";
@@ -53,6 +54,7 @@ const app = new Elysia()
 	.use(voteRoutes)
 	.use(practiceRoutes)
 	.use(leaderboardRoutes)
+	.use(dashboardRoutes)
 	.get("/api/health", () => ({
 		status: "ok",
 		timestamp: new Date().toISOString(),

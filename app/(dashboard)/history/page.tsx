@@ -71,7 +71,7 @@ export default function HistoryPage() {
 	const getScoreColor = (score: number) => {
 		if (score >= 80) return "text-green-600 dark:text-green-400";
 		if (score >= 60) return "text-yellow-600 dark:text-yellow-400";
-		return "text-red-600 dark:text-red-400";
+		return "text-white";
 	};
 
 	const getScoreBadge = (score: number) => {
@@ -152,7 +152,7 @@ export default function HistoryPage() {
 					) : (
 						<div className="grid gap-4">
 							{practiceHistory.map((item) => (
-								<Link key={item.id} href={`/history/${item.id}`}>
+								<Link key={item.id} href={`/practice/${item.id}`}>
 									<Card className="hover:bg-accent/50 transition-colors cursor-pointer">
 										<CardHeader>
 											<div className="flex items-start justify-between gap-4">
@@ -225,7 +225,7 @@ export default function HistoryPage() {
 					) : (
 						<div className="grid gap-4">
 							{translationHistory.map((item) => (
-								<Link key={item.id} href={`/history/translation/${item.id}`}>
+								<Link key={item.id} href={`/history/${item.id}`}>
 									<Card className="hover:bg-accent/50 transition-colors cursor-pointer">
 										<CardHeader>
 											<div className="flex items-start justify-between gap-4">

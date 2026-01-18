@@ -80,8 +80,7 @@ export default function PracticeListPage() {
 			<div className="space-y-8">
 				<Skeleton className="h-20 w-full" />
 				<div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-					{[...Array(6)].map((_, i) => (
-						// biome-ignore lint/suspicious/noArrayIndexKey: Skeleton list is static
+					{[...Array(6)].map((i) => (
 						<Skeleton key={i} className="h-64" />
 					))}
 				</div>
@@ -142,7 +141,12 @@ export default function PracticeListPage() {
 												? "default"
 												: "destructive"
 									}
-									className="capitalize"
+									className={`capitalize ${
+										challenge.difficulty !== "beginner" &&
+										challenge.difficulty !== "intermediate"
+											? "text-white"
+											: ""
+									}`}
 								>
 									{challenge.difficulty}
 								</Badge>

@@ -1,10 +1,16 @@
 "use client";
 
-import { ArrowLeft, RefreshCw, Send, Star, Trophy } from "lucide-react";
+import {
+	ArrowLeft,
+	Calendar,
+	CheckCircle2,
+	Lightbulb,
+	RefreshCw,
+	Trophy,
+} from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import * as React from "react";
-import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,282 +22,185 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Textarea } from "@/components/ui/textarea";
 
-type Challenge = {
+type PracticeDetail = {
 	id: string;
-	title: string;
-	description: string;
-	difficulty: string;
-	xpReward: number;
-	tags: string[];
-	hints: string[];
-};
-
-type Feedback = {
+	userId: string;
+	userInput: string;
+	challengePrompt: string;
 	score: number;
-	explanation: string;
-	strengths: string[];
-	improvements: string[];
+	feedbackText: string;
+	suggestions: string[];
+	createdAt: string;
 };
 
-export default function PracticeDetailPage() {
+export default function PracticeHistoryDetailPage() {
 	const params = useParams();
-	const id = params.id as string;
-
-	const [challenge, setChallenge] = React.useState<Challenge | null>(null);
+	// router unused
+	const [practice, setPractice] = React.useState<PracticeDetail | null>(null);
 	const [loading, setLoading] = React.useState(true);
-	const [input, setInput] = React.useState("");
-	const [isSubmitting, setIsSubmitting] = React.useState(false);
-	const [feedback, setFeedback] = React.useState<Feedback | null>(null);
-	const [xpEarned, setXpEarned] = React.useState(0);
+	const [error, setError] = React.useState<string | null>(null);
 
 	React.useEffect(() => {
-		async function fetchChallenge() {
+		async function fetchPractice() {
 			try {
-				const response = await fetch("/api/practice/challenges");
-				if (!response.ok) throw new Error("Failed to fetch");
-				const challenges = await response.json();
-				const found = challenges.find((c: Challenge) => c.id === id);
-				setChallenge(found || null);
+				const res = await fetch(`/api/practice/${params.id}`);
+				if (res.ok) {
+					const data = await res.json();
+					setPractice(data);
+				} else {
+					setError("Failed to load practice details");
+				}
 			} catch (error) {
-				console.error("Failed to fetch challenge:", error);
+				console.error("Failed to fetch practice:", error);
+				setError("Failed to load practice details");
 			} finally {
 				setLoading(false);
 			}
 		}
 
-		fetchChallenge();
-	}, [id]);
-
-	const handleSubmit = async () => {
-		if (!challenge || !input.trim()) return;
-
-		setIsSubmitting(true);
-		try {
-			const response = await fetch("/api/practice/submit", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({
-					challengeId: challenge.id,
-					userExplanation: input,
-				}),
-			});
-
-			if (!response.ok) {
-				throw new Error("Failed to submit");
-			}
-
-			const data = await response.json();
-			setFeedback(data.feedback);
-			setXpEarned(data.xpEarned);
-			toast.success(`+${data.xpEarned} XP earned!`);
-		} catch (_error) {
-			toast.error("Failed to submit. Please try again.");
-		} finally {
-			setIsSubmitting(false);
+		if (params.id) {
+			fetchPractice();
 		}
+	}, [params.id]);
+
+	const getScoreColor = (score: number) => {
+		if (score >= 80) return "text-green-600 dark:text-green-400";
+		if (score >= 60) return "text-yellow-600 dark:text-yellow-400";
+		return "text-white";
 	};
 
-	const handleRetry = () => {
-		setFeedback(null);
-		setInput("");
-		setXpEarned(0);
+	const getScoreBadge = (score: number) => {
+		if (score >= 80) return "default";
+		if (score >= 60) return "secondary";
+		return "destructive";
 	};
 
 	if (loading) {
 		return (
-			<div className="space-y-8">
-				<Skeleton className="h-20 w-full" />
-				<Skeleton className="h-96 w-full" />
+			<div className="max-w-4xl mx-auto space-y-6">
+				<Skeleton className="h-10 w-32" />
+				<Card>
+					<CardHeader>
+						<Skeleton className="h-6 w-3/4 mb-2" />
+						<Skeleton className="h-4 w-1/2" />
+					</CardHeader>
+					<CardContent className="space-y-4">
+						<Skeleton className="h-24 w-full" />
+						<Skeleton className="h-32 w-full" />
+					</CardContent>
+				</Card>
 			</div>
 		);
 	}
 
-	if (!challenge) {
+	if (error || !practice) {
 		return (
-			<div className="text-center py-20">
-				<h2 className="text-2xl font-bold mb-4">Challenge Not Found</h2>
-				<Button asChild>
-					<Link href="/practice">
+			<div className="max-w-4xl mx-auto space-y-6">
+				<Button variant="ghost" asChild>
+					<Link href="/history">
 						<ArrowLeft className="mr-2 h-4 w-4" />
-						Back to Practice
+						Back to History
 					</Link>
 				</Button>
+				<Card>
+					<CardContent className="flex flex-col items-center justify-center py-12">
+						<p className="text-sm text-muted-foreground">
+							{error || "Practice not found"}
+						</p>
+					</CardContent>
+				</Card>
 			</div>
 		);
 	}
+
+	// Parse suggestions if it's a string array
+	const improvements =
+		typeof practice.suggestions === "string" ? [] : practice.suggestions || [];
 
 	return (
-		<div className="space-y-8">
-			<div className="flex items-center gap-4">
-				<Button variant="ghost" size="icon" asChild>
-					<Link href="/practice">
-						<ArrowLeft className="h-5 w-5" />
-					</Link>
-				</Button>
-				<div>
-					<h1 className="text-2xl font-bold tracking-tight">
-						{challenge.title}
-					</h1>
-					<div className="flex items-center gap-2 mt-1">
-						<Badge
-							variant={
-								challenge.difficulty === "beginner"
-									? "secondary"
-									: challenge.difficulty === "intermediate"
-										? "default"
-										: "destructive"
-							}
-							className="capitalize"
-						>
-							{challenge.difficulty}
+		<div className="max-w-4xl mx-auto space-y-6">
+			<Button variant="ghost" asChild>
+				<Link href="/history">
+					<ArrowLeft className="mr-2 h-4 w-4" />
+					Back to History
+				</Link>
+			</Button>
+
+			{/* Challenge Info */}
+			<Card>
+				<CardHeader>
+					<div className="flex items-start justify-between gap-4">
+						<div className="flex-1">
+							<CardTitle>
+								{practice.challengePrompt || "Practice Challenge"}
+							</CardTitle>
+							<CardDescription className="flex items-center gap-2 mt-2">
+								<Calendar className="h-4 w-4" />
+								{new Date(practice.createdAt).toLocaleDateString("en-US", {
+									month: "long",
+									day: "numeric",
+									year: "numeric",
+									hour: "2-digit",
+									minute: "2-digit",
+								})}
+							</CardDescription>
+						</div>
+						<Badge variant={getScoreBadge(practice.score)} className="text-lg">
+							<Trophy className={`mr-2 h-4 w-4 ${getScoreColor(practice.score)}`} />
+							<span className={`font-bold ${getScoreColor(practice.score)}`}>
+								{practice.score}/100
+							</span>
 						</Badge>
-						{challenge.tags.map((tag) => (
-							<Badge
-								key={tag}
-								variant="outline"
-								className="text-xs font-normal"
-							>
-								{tag}
-							</Badge>
-						))}
-						<span className="text-sm text-muted-foreground border-l pl-2 ml-1">
-							{challenge.xpReward} XP
-						</span>
 					</div>
-				</div>
-			</div>
+				</CardHeader>
+			</Card>
 
-			<div className="grid gap-8 md:grid-cols-3">
-				<Card className="md:col-span-3 border-l-4 border-l-primary">
-					<CardHeader>
-						<CardTitle className="text-lg">Scenario</CardTitle>
-						<CardDescription className="text-base">
-							{challenge.description}
-						</CardDescription>
-					</CardHeader>
-				</Card>
+			{/* Your Explanation */}
+			<Card>
+				<CardHeader>
+					<CardTitle className="text-base">Your Explanation</CardTitle>
+				</CardHeader>
+				<CardContent>
+					<p className="text-sm whitespace-pre-wrap">{practice.userInput}</p>
+				</CardContent>
+			</Card>
 
-				{/* Hints Section */}
-				<div className="md:col-span-3">
-					<details className="group">
-						<summary className="flex cursor-pointer items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground w-fit">
-							<span className="group-open:hidden">Show Hint</span>
-							<span className="hidden group-open:inline">Hide Hint</span>
-						</summary>
-						<div className="mt-2 text-sm text-muted-foreground bg-slate-50 dark:bg-slate-900/50 p-4 rounded-md border animated fadeIn">
-							<ul className="list-disc list-inside space-y-1">
-								{challenge.hints.map((hint) => (
-									<li key={hint}>{hint}</li>
+			{/* AI Feedback */}
+			<Card>
+				<CardHeader>
+					<CardTitle className="text-base">AI Feedback</CardTitle>
+				</CardHeader>
+				<CardContent className="space-y-4">
+					<p className="text-sm">{practice.feedbackText}</p>
+
+					{improvements.length > 0 && (
+						<div className="space-y-2">
+							<div className="flex items-center gap-2 text-sm font-medium">
+								<Lightbulb className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+								Suggestions for Improvement
+							</div>
+							<ul className="space-y-2">
+								{improvements.map((improvement, idx) => (
+									// biome-ignore lint/suspicious/noArrayIndexKey: List is static strings
+									<li key={idx} className="flex items-start gap-2 text-sm">
+										<CheckCircle2 className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
+										<span>{improvement}</span>
+									</li>
 								))}
 							</ul>
 						</div>
-					</details>
-				</div>
-
-				{!feedback ? (
-					<Card className="md:col-span-2">
-						<CardHeader>
-							<CardTitle>Your Answer</CardTitle>
-						</CardHeader>
-						<CardContent className="space-y-4">
-							<Textarea
-								placeholder="Type your explanation..."
-								className="min-h-[200px] resize-none p-4"
-								value={input}
-								onChange={(e) => setInput(e.target.value)}
-							/>
-						</CardContent>
-						<CardFooter className="flex justify-end">
-							<Button
-								onClick={handleSubmit}
-								disabled={!input.trim() || isSubmitting}
-								size="lg"
-							>
-								{isSubmitting ? (
-									"Grading..."
-								) : (
-									<>
-										<span className="mr-2">Submit</span>{" "}
-										<Send className="h-4 w-4" />
-									</>
-								)}
-							</Button>
-						</CardFooter>
-					</Card>
-				) : (
-					<Card className="md:col-span-2 border-green-200 dark:border-green-900 bg-green-50/10">
-						<CardHeader>
-							<div className="flex justify-between items-center">
-								<CardTitle>Feedback</CardTitle>
-								<Badge
-									variant={feedback.score >= 80 ? "default" : "secondary"}
-									className="text-lg px-3"
-								>
-									<Star className="h-4 w-4 mr-1 fill-current" />{" "}
-									{feedback.score}/100
-								</Badge>
-							</div>
-						</CardHeader>
-						<CardContent className="space-y-4">
-							<p className="text-sm">{feedback.explanation}</p>
-							<div className="grid grid-cols-2 gap-4">
-								<div>
-									<h4 className="text-sm font-semibold text-green-600 mb-1">
-										Strengths
-									</h4>
-									<ul className="text-sm list-disc list-inside text-muted-foreground">
-										{feedback.strengths?.map((s) => (
-											<li key={s}>{s}</li>
-										))}
-									</ul>
-								</div>
-								<div>
-									<h4 className="text-sm font-semibold text-amber-600 mb-1">
-										Improvements
-									</h4>
-									<ul className="text-sm list-disc list-inside text-muted-foreground">
-										{feedback.improvements?.map((s) => (
-											<li key={s}>{s}</li>
-										))}
-									</ul>
-								</div>
-							</div>
-							{xpEarned > 0 && (
-								<div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3 text-center">
-									<Trophy className="h-5 w-5 text-yellow-500 inline mr-2" />
-									<span className="font-bold text-yellow-700 dark:text-yellow-400">
-										+{xpEarned} XP Earned!
-									</span>
-								</div>
-							)}
-						</CardContent>
-						<CardFooter>
-							<Button
-								onClick={handleRetry}
-								variant="outline"
-								className="w-full"
-							>
-								<RefreshCw className="mr-2 h-4 w-4" /> Try Again
-							</Button>
-						</CardFooter>
-					</Card>
-				)}
-
-				<div className="space-y-6">
-					<Card>
-						<CardHeader>
-							<CardTitle className="text-base">Tips</CardTitle>
-						</CardHeader>
-						<CardContent className="text-sm text-muted-foreground space-y-2">
-							<p>• Keep it simple.</p>
-							<p>• Use relatable analogies.</p>
-							<p>• Avoid jargon.</p>
-						</CardContent>
-					</Card>
-				</div>
-			</div>
+					)}
+				</CardContent>
+				<CardFooter>
+					<Button variant="outline" className="w-full" asChild>
+						<Link href="/practice">
+							<RefreshCw className="mr-2 h-4 w-4" />
+							Try More Challenges
+						</Link>
+					</Button>
+				</CardFooter>
+			</Card>
 		</div>
 	);
 }

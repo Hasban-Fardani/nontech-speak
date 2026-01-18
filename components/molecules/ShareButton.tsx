@@ -29,10 +29,15 @@ export function ShareButton({
 	const [copied, setCopied] = useState(false);
 
 	const handleShare = async () => {
-		// In a real app, this would be the actual public URL
-		// For now, we mock it or use the current origin if available
+		if (!id) {
+			toast.error("Invalid translation ID");
+			return;
+		}
+
 		const origin = typeof window !== "undefined" ? window.location.origin : "";
 		const url = `${origin}/share/${id}`;
+
+		console.log("Sharing URL:", url);
 
 		try {
 			if (navigator.share) {
@@ -51,7 +56,22 @@ export function ShareButton({
 			}
 		} catch (error) {
 			console.error("Error sharing:", error);
-			toast.error("Failed to share");
+			try {
+				const textArea = document.createElement("textarea");
+				textArea.value = url;
+				document.body.appendChild(textArea);
+				textArea.select();
+				document.execCommand("copy");
+				document.body.removeChild(textArea);
+				setCopied(true);
+				toast.success("Link copied manually", {
+					description: "Anyone with this link can view the translation.",
+				});
+				setTimeout(() => setCopied(false), 2000);
+			} catch (fallbackError) {
+				console.error("Fallback sharing failed:", fallbackError);
+				toast.error("Failed to share link");
+			}
 		}
 	};
 

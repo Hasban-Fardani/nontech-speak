@@ -64,10 +64,21 @@ export const translationRoutes = new Elysia({ prefix: "/api/translation" })
 						throw new Error(`AI Stream Error: ${errorMessage}`);
 					}
 
+					let content = "";
 					if (typeof chunk === "string") {
-						simplifiedText += chunk;
+						content = chunk;
 					} else if (chunk && typeof chunk === "object" && "content" in chunk) {
-						simplifiedText += chunk.content;
+						content = chunk.content;
+					}
+
+					if (content) {
+						// Check if content is accumulated (starts with what we have so far)
+						// or if it's a delta (append it)
+						if (simplifiedText && content.startsWith(simplifiedText)) {
+							simplifiedText = content;
+						} else {
+							simplifiedText += content;
+						}
 					}
 				}
 

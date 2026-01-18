@@ -1,13 +1,11 @@
 "use client";
 
-import { Crown, Medal } from "lucide-react";
+import { Crown } from "lucide-react";
 import * as React from "react";
 import {
 	type LeaderboardEntry,
 	LeaderboardItem,
 } from "@/components/molecules/LeaderboardItem";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import {
 	Card,
 	CardContent,

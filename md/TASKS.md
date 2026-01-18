@@ -27,7 +27,7 @@
 - [x] Create molecule components (FormField, Card, AudioRecorder, etc)
 - [x] Create organism components (Navbar, Sidebar, TranslationForm, etc)
 - [x] Create Settings page UI
-- [ ] Implement dark mode support
+- [x] Implement dark mode support
 - [ ] Setup i18n structure (English first)
 
 ## Phase 4: Translation Feature (Text Only)
@@ -48,9 +48,9 @@
 - [x] Implement Share functionality with Public Page & TTS
  
 ## Phase 5: Speech-to-Text Integration
-- [ ] Setup Cloudflare R2 for file storage
-- [ ] Create audio file upload endpoint
-- [ ] Implement file validation (size, type, magic number)
+- [x] Setup Cloudflare R2 for file storage
+- [x] Create audio file upload endpoint
+- [x] Implement file validation (size, type, magic number)
 - [x] Create AudioRecorder component (UI Only)
 - [x] Create AudioUploader component (UI Only)
 - [x] Integrate voice input to translation flow (UI Only)
@@ -77,16 +77,16 @@
 - [x] Make Leaderboard publicly accessible
 
 ## Phase 8: Security & Polish
-- [ ] Implement rate limiting (in-memory)
+- [x] Implement rate limiting (Redis Upstash)
 - [ ] Add input sanitization
-- [ ] Configure security headers
-- [ ] Setup Sentry for error tracking
+- [x] Configure security headers
+- [x] Setup Sentry for error tracking
 - [ ] Add API documentation with Elysia plugin
 - [x] Mobile responsiveness check
-- [ ] Dark mode polish
+- [x] Dark mode polish
 
 ## Phase 9: Deployment
-- [ ] Setup production environment variables
+- [x] Setup production environment variables
 - [ ] Configure Vercel deployment
 - [x] Test production build
 - [ ] Deploy to Vercel

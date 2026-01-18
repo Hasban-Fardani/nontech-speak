@@ -1,7 +1,7 @@
 "use client";
 
 import {
-	Activity,
+	Activity as ActivityIcon,
 	BookOpen,
 	Languages,
 	Library,
@@ -9,34 +9,85 @@ import {
 	Target,
 } from "lucide-react";
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { api } from "@/lib/api-client";
 import { useSession } from "@/lib/auth-client";
+
+interface DashboardStats {
+	translations: number;
+	practiceSessions: number;
+	savedExamples: number;
+	averageScore: number;
+}
+
+interface Activity {
+	id: string;
+	type: "translation" | "practice";
+	title: string;
+	audience?: string;
+	score?: number;
+	createdAt: Date | string;
+}
 
 export default function DashboardPage() {
 	const { data: session } = useSession();
+	const [stats, setStats] = useState<DashboardStats | null>(null);
+	const [activity, setActivity] = useState<Activity[]>([]);
+	const [loading, setLoading] = useState(true);
 
-	const stats = [
+	useEffect(() => {
+		async function fetchDashboardData() {
+			try {
+				// Fetch stats
+				const statsResponse = await api.api.dashboard.stats.get();
+				if (statsResponse.data && !("error" in statsResponse.data)) {
+					setStats(statsResponse.data as DashboardStats);
+				}
+
+				// Fetch recent activity
+				const activityResponse = await api.api.dashboard.activity.get({
+					query: { limit: "5" },
+				});
+				if (activityResponse.data && Array.isArray(activityResponse.data)) {
+					setActivity(activityResponse.data as unknown as Activity[]);
+				}
+			} catch (error) {
+				console.error("Failed to fetch dashboard data:", error);
+			} finally {
+				setLoading(false);
+			}
+		}
+
+		fetchDashboardData();
+	}, []);
+
+	const statsCards = [
 		{
 			label: "Translations",
-			value: "0",
+			value: loading ? "..." : stats?.translations.toString() || "0",
 			icon: Languages,
 			color: "blue",
 		},
 		{
 			label: "Practice Sessions",
-			value: "0",
+			value: loading ? "..." : stats?.practiceSessions.toString() || "0",
 			icon: Target,
 			color: "green",
 		},
 		{
 			label: "Saved Examples",
-			value: "0",
+			value: loading ? "..." : stats?.savedExamples.toString() || "0",
 			icon: Library,
 			color: "purple",
 		},
 		{
 			label: "Average Score",
-			value: "-",
-			icon: Activity,
+			value: loading
+				? "..."
+				: stats?.averageScore
+					? `${stats.averageScore}%`
+					: "-",
+			icon: ActivityIcon,
 			color: "yellow",
 		},
 	];
@@ -79,7 +130,7 @@ export default function DashboardPage() {
 
 			{/* Stats grid */}
 			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-				{stats.map((stat) => (
+				{statsCards.map((stat) => (
 					<div
 						key={stat.label}
 						className="bg-white dark:bg-slate-900 rounded-xl p-6 border border-slate-200 dark:border-slate-800"
@@ -131,28 +182,81 @@ export default function DashboardPage() {
 				</div>
 			</div>
 
-			{/* Recent activity placeholder */}
+			{/* Recent activity */}
 			<div>
 				<h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-4">
 					Recent Activity
 				</h2>
-				<div className="bg-white dark:bg-slate-900 rounded-xl p-12 border border-slate-200 dark:border-slate-800 text-center">
-					<div className="inline-flex items-center justify-center p-4 bg-slate-100 dark:bg-slate-800 rounded-full mb-4">
-						<Activity className="h-8 w-8 text-slate-400" />
+				{loading ? (
+					<div className="bg-white dark:bg-slate-900 rounded-xl p-12 border border-slate-200 dark:border-slate-800 text-center">
+						<p className="text-slate-600 dark:text-slate-400">Loading...</p>
 					</div>
-					<h3 className="text-lg font-medium text-slate-900 dark:text-white mb-2">
-						No activity yet
-					</h3>
-					<p className="text-slate-600 dark:text-slate-400 mb-6">
-						Start by creating your first translation or practice session
-					</p>
-					<Link
-						href="/translate"
-						className="inline-block px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
-					>
-						Get Started
-					</Link>
-				</div>
+				) : activity.length === 0 ? (
+					<div className="bg-white dark:bg-slate-900 rounded-xl p-12 border border-slate-200 dark:border-slate-800 text-center">
+						<div className="inline-flex items-center justify-center p-4 bg-slate-100 dark:bg-slate-800 rounded-full mb-4">
+							<ActivityIcon className="h-8 w-8 text-slate-400" />
+						</div>
+						<h3 className="text-lg font-medium text-slate-900 dark:text-white mb-2">
+							No activity yet
+						</h3>
+						<p className="text-slate-600 dark:text-slate-400 mb-6">
+							Start by creating your first translation or practice session
+						</p>
+						<Link
+							href="/translate"
+							className="inline-block px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
+						>
+							Get Started
+						</Link>
+					</div>
+				) : (
+					<div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 divide-y divide-slate-200 dark:divide-slate-800">
+						{activity.map((item) => (
+							<Link
+								key={item.id}
+								href={
+									item.type === "translation"
+										? `/history/${item.id}`
+										: `/practice/${item.id}`
+								}
+								className="block p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+							>
+								<div className="flex items-start justify-between">
+									<div className="flex-1">
+										<div className="flex items-center gap-2 mb-1">
+											{item.type === "translation" ? (
+												<Languages className="h-4 w-4 text-blue-600" />
+											) : (
+												<Target className="h-4 w-4 text-green-600" />
+											)}
+											<span className="text-sm font-medium text-slate-900 dark:text-white">
+												{item.type === "translation"
+													? "Translation"
+													: "Practice Session"}
+											</span>
+											{item.score !== undefined && (
+												<span className="text-sm text-green-600 font-medium">
+													{item.score}%
+												</span>
+											)}
+										</div>
+										<p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2">
+											{item.title}
+										</p>
+										{item.audience && (
+											<span className="inline-block mt-1 text-xs text-slate-500 dark:text-slate-500 capitalize">
+												{item.audience}
+											</span>
+										)}
+									</div>
+									<span className="text-xs text-slate-500 dark:text-slate-500 ml-4">
+										{new Date(item.createdAt).toLocaleDateString()}
+									</span>
+								</div>
+							</Link>
+						))}
+					</div>
+				)}
 			</div>
 		</div>
 	);

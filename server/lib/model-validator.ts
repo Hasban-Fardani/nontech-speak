@@ -1,5 +1,5 @@
 // List of Pro models that require user's own API key
-const PRO_MODELS = ["gemini-2.5-pro", "gemini-3-pro-preview"];
+const _PRO_MODELS = ["gemini-2.5-pro", "gemini-3-pro-preview"];
 
 // List of allowed models for env token (Flash models only)
 const FLASH_MODELS = [

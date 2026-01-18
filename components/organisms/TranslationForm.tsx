@@ -94,6 +94,8 @@ export function TranslationForm() {
 			const response = await api.api.translation.create.post({
 				technicalText: data.technicalText,
 				audienceType: data.audienceType,
+				model: data.model,
+				isPublic: isPublic,
 			});
 
 			if (response.error) {

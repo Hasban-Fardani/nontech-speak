@@ -80,70 +80,70 @@ Implement these routes in `server/routes/` or standard Next.js API routes if mov
 ### A. Translation & History (`server/routes/translation.ts`)
 
 #### 1. `POST /api/translation` (Update existing)
-*   **Current**: Streams response but doesn't save.
-*   **TODO**:
+*   [x] **Current**: Streams response but doesn't save.
+*   [x] **TODO**:
     *   Accept `isPublic` boolean in body (default false).
     *   Generate `shareId` (nanoid) immediately.
     *   **After** streaming completes (or during), save the record to `translations` table.
     *   Return the `id` and `shareId` in the final response data.
 
 #### 2. `PATCH /api/translation/:id/visibility` (New)
-*   **Auth**: Required.
-*   **Body**: `{ isPublic: boolean }`.
-*   **Logic**: Update `isPublic` status for specific translation.
+*   [x] **Auth**: Required.
+*   [x] **Body**: `{ isPublic: boolean }`.
+*   [x] **Logic**: Update `isPublic` status for specific translation.
 
 #### 3. `GET /api/translation/history` (New)
-*   **Auth**: Required.
-*   **Query Params**: `page`, `limit` (pagination).
-*   **Logic**: Fetch entries from `translations` where `userId` matches session. Order by `createdAt` desc.
-*   **Response**: List of translation objects.
+*   [x] **Auth**: Required.
+*   [x] **Query Params**: `page`, `limit` (pagination).
+*   [x] **Logic**: Fetch entries from `translations` where `userId` matches session. Order by `createdAt` desc.
+*   [x] **Response**: List of translation objects.
 
 #### 3. `GET /api/translation/:id` (New)
-*   **Auth**: Required.
-*   **Logic**: Fetch single translation by ID. Ensure `userId` matches.
-*   **Response**: Translation details.
+*   [x] **Auth**: Required.
+*   [x] **Logic**: Fetch single translation by ID. Ensure `userId` matches.
+*   [x] **Response**: Translation details.
 
 #### 4. `DELETE /api/translation/:id` (New)
-*   **Auth**: Required.
-*   **Logic**: Delete translation if `userId` matches.
+*   [x] **Auth**: Required.
+*   [x] **Logic**: Delete translation if `userId` matches.
 
 ---
 
 ### B. Public Sharing & Feed (`server/routes/public.ts`)
 
 #### 1. `GET /api/public/feed` (New)
-*   **Auth**: Public.
-*   **Query Params**: `limit` (default 10).
-*   **Logic**:
+*   [x] **Auth**: Public.
+*   [x] **Query Params**: `limit` (default 10).
+*   [x] **Logic**:
     *   Fetch `translations` where `isPublic` is `true`.
     *   Order by `createdAt` desc.
     *   **Security**: Return limited fields (User name/avatar if allowed, text, tone, etc.).
-*   **Response**: List of public translations.
+*   [x] **Response**: List of public translations.
 
 #### 2. `GET /api/share/:shareId` (New)
-*   **Auth**: **Public** (No auth required).
-*   **Logic**:
+*   [x] **Auth**: **Public** (No auth required).
+*   [x] **Logic**:
     *   Find translation by `shareId`.
     *   Check if exist.
     *   (Optional) Increment `viewCount` (async, don't block response).
     *   **Security**: Return ONLY strictly necessary fields (`originalText`, `translatedText`, `audience`, `createdAt`). **DO NOT** return `userId` or internal metadata.
-*   **Response**: `{ originalText, translatedText, audience, createdAt }`.
+*   [x] **Response**: `{ originalText, translatedText, audience, createdAt }`.
 
 ---
 
 ### C. Settings & Profile (`server/routes/user.ts`)
 
 #### 1. `PATCH /api/user/settings` (New)
-*   **Auth**: Required.
-*   **Body**: `{ defaultModel, defaultAudience, defaultTone, theme, apiKeys }`.
-*   **Logic**:
+*   [x] **Auth**: Required.
+*   [x] **Body**: `{ defaultModel, defaultAudience, defaultTone, theme, apiKeys }`.
+*   [x] **Logic**:
     *   Validate input (Zod).
     *   If `apiKeys` provided, **ENCRYPT** them before saving (using a server-side secret).
     *   Update user record.
-*   **Response**: Success status.
+*   [x] **Response**: Success status.
 
 #### 2. `POST /api/user/change-password` (New)
-*   **Auth**: Required.
+*   [x] **Auth**: Required.
 *   **Body**: `{ currentPassword, newPassword }`.
 *   **Logic**:
     *   Verify `currentPassword` matches hash.
