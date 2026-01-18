@@ -1,16 +1,10 @@
 "use client";
 
-import {
-	ArrowLeft,
-	Calendar,
-	CheckCircle2,
-	Lightbulb,
-	RefreshCw,
-	Trophy,
-} from "lucide-react";
+import { ArrowLeft, Send, Sparkles } from "lucide-react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import * as React from "react";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,58 +16,83 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Textarea } from "@/components/ui/textarea";
 
-type PracticeDetail = {
+type Challenge = {
 	id: string;
-	userId: string;
-	userInput: string;
-	challengePrompt: string;
-	score: number;
-	feedbackText: string;
-	suggestions: string[];
-	createdAt: string;
+	title: string;
+	description: string;
+	difficulty: "beginner" | "intermediate" | "expert";
+	xpReward: number;
+	tags: string[];
+	hints: string[];
 };
 
-export default function PracticeHistoryDetailPage() {
+export default function ActivePracticePage() {
 	const params = useParams();
-	// router unused
-	const [practice, setPractice] = React.useState<PracticeDetail | null>(null);
+	const router = useRouter();
+	const [challenge, setChallenge] = React.useState<Challenge | null>(null);
 	const [loading, setLoading] = React.useState(true);
-	const [error, setError] = React.useState<string | null>(null);
+	const [input, setInput] = React.useState("");
+	const [isSubmitting, setIsSubmitting] = React.useState(false);
 
 	React.useEffect(() => {
-		async function fetchPractice() {
+		async function fetchChallenge() {
 			try {
-				const res = await fetch(`/api/practice/${params.id}`);
+				const res = await fetch(`/api/practice/challenges/${params.id}`);
 				if (res.ok) {
 					const data = await res.json();
-					setPractice(data);
+					setChallenge(data);
 				} else {
-					setError("Failed to load practice details");
+					toast.error("Challenge not found");
 				}
 			} catch (error) {
-				console.error("Failed to fetch practice:", error);
-				setError("Failed to load practice details");
+				console.error("Failed to fetch challenge:", error);
+				toast.error("Failed to load challenge");
 			} finally {
 				setLoading(false);
 			}
 		}
 
 		if (params.id) {
-			fetchPractice();
+			fetchChallenge();
 		}
 	}, [params.id]);
 
-	const getScoreColor = (score: number) => {
-		if (score >= 80) return "text-green-600 dark:text-green-400";
-		if (score >= 60) return "text-yellow-600 dark:text-yellow-400";
-		return "text-white";
-	};
+	const handleSubmit = async () => {
+		if (!challenge || !input.trim()) return;
 
-	const getScoreBadge = (score: number) => {
-		if (score >= 80) return "default";
-		if (score >= 60) return "secondary";
-		return "destructive";
+		setIsSubmitting(true);
+		try {
+			const response = await fetch("/api/practice/submit", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					challengeId: challenge.id,
+					userExplanation: input,
+				}),
+			});
+
+			if (!response.ok) {
+				const errorData = await response.json();
+				throw new Error(errorData.error || "Failed to submit");
+			}
+
+			const data = await response.json();
+			toast.success(`+${data.xpEarned} XP Earned!`, {
+				description: "Great job completing the challenge!",
+			});
+
+			// Redirect to the result/history page
+			router.push(`/history/practice/${data.practice.id}`);
+		} catch (error) {
+			console.error("Submit error:", error);
+			toast.error(
+				error instanceof Error ? error.message : "Failed to submit answer",
+			);
+		} finally {
+			setIsSubmitting(false);
+		}
 	};
 
 	if (loading) {
@@ -85,8 +104,7 @@ export default function PracticeHistoryDetailPage() {
 						<Skeleton className="h-6 w-3/4 mb-2" />
 						<Skeleton className="h-4 w-1/2" />
 					</CardHeader>
-					<CardContent className="space-y-4">
-						<Skeleton className="h-24 w-full" />
+					<CardContent>
 						<Skeleton className="h-32 w-full" />
 					</CardContent>
 				</Card>
@@ -94,112 +112,124 @@ export default function PracticeHistoryDetailPage() {
 		);
 	}
 
-	if (error || !practice) {
+	if (!challenge) {
 		return (
-			<div className="max-w-4xl mx-auto space-y-6">
-				<Button variant="ghost" asChild>
-					<Link href="/history">
+			<div className="max-w-4xl mx-auto space-y-6 text-center py-20">
+				<h2 className="text-2xl font-bold mb-4">Challenge Not Found</h2>
+				<Button asChild>
+					<Link href="/practice">
 						<ArrowLeft className="mr-2 h-4 w-4" />
-						Back to History
+						Back to Practice List
 					</Link>
 				</Button>
-				<Card>
-					<CardContent className="flex flex-col items-center justify-center py-12">
-						<p className="text-sm text-muted-foreground">
-							{error || "Practice not found"}
-						</p>
-					</CardContent>
-				</Card>
 			</div>
 		);
 	}
 
-	// Parse suggestions if it's a string array
-	const improvements =
-		typeof practice.suggestions === "string" ? [] : practice.suggestions || [];
-
 	return (
 		<div className="max-w-4xl mx-auto space-y-6">
 			<Button variant="ghost" asChild>
-				<Link href="/history">
+				<Link href="/practice">
 					<ArrowLeft className="mr-2 h-4 w-4" />
-					Back to History
+					Back to Practice List
 				</Link>
 			</Button>
 
-			{/* Challenge Info */}
-			<Card>
-				<CardHeader>
-					<div className="flex items-start justify-between gap-4">
-						<div className="flex-1">
-							<CardTitle>
-								{practice.challengePrompt || "Practice Challenge"}
-							</CardTitle>
-							<CardDescription className="flex items-center gap-2 mt-2">
-								<Calendar className="h-4 w-4" />
-								{new Date(practice.createdAt).toLocaleDateString("en-US", {
-									month: "long",
-									day: "numeric",
-									year: "numeric",
-									hour: "2-digit",
-									minute: "2-digit",
-								})}
-							</CardDescription>
-						</div>
-						<Badge variant={getScoreBadge(practice.score)} className="text-lg">
-							<Trophy className={`mr-2 h-4 w-4 ${getScoreColor(practice.score)}`} />
-							<span className={`font-bold ${getScoreColor(practice.score)}`}>
-								{practice.score}/100
-							</span>
+			<div className="flex items-center justify-between">
+				<div>
+					<h1 className="text-2xl font-bold tracking-tight">{challenge.title}</h1>
+					<div className="flex items-center gap-2 mt-2">
+						<Badge
+							variant={
+								challenge.difficulty === "beginner"
+									? "secondary"
+									: challenge.difficulty === "intermediate"
+										? "default"
+										: "destructive"
+							}
+							className="capitalize"
+						>
+							{challenge.difficulty}
 						</Badge>
+						<span className="text-sm text-muted-foreground border-l pl-2 ml-1">
+							{challenge.xpReward} XP Reward
+						</span>
 					</div>
+				</div>
+			</div>
+
+			<Card className="border-l-4 border-l-primary">
+				<CardHeader>
+					<CardTitle className="text-lg">Scenario</CardTitle>
+					<CardDescription className="text-base text-foreground/90">
+						{challenge.description}
+					</CardDescription>
 				</CardHeader>
 			</Card>
 
-			{/* Your Explanation */}
-			<Card>
-				<CardHeader>
-					<CardTitle className="text-base">Your Explanation</CardTitle>
-				</CardHeader>
-				<CardContent>
-					<p className="text-sm whitespace-pre-wrap">{practice.userInput}</p>
-				</CardContent>
-			</Card>
-
-			{/* AI Feedback */}
-			<Card>
-				<CardHeader>
-					<CardTitle className="text-base">AI Feedback</CardTitle>
-				</CardHeader>
-				<CardContent className="space-y-4">
-					<p className="text-sm">{practice.feedbackText}</p>
-
-					{improvements.length > 0 && (
-						<div className="space-y-2">
-							<div className="flex items-center gap-2 text-sm font-medium">
-								<Lightbulb className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
-								Suggestions for Improvement
-							</div>
-							<ul className="space-y-2">
-								{improvements.map((improvement, idx) => (
-									// biome-ignore lint/suspicious/noArrayIndexKey: List is static strings
-									<li key={idx} className="flex items-start gap-2 text-sm">
-										<CheckCircle2 className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
-										<span>{improvement}</span>
-									</li>
+			{/* Hints Section */}
+			{challenge.hints && challenge.hints.length > 0 && (
+				<div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-md border">
+					<details className="group">
+						<summary className="flex cursor-pointer items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground w-fit">
+							<Sparkles className="h-4 w-4" />
+							<span className="group-open:hidden">Show Hint</span>
+							<span className="hidden group-open:inline">Hide Hint</span>
+						</summary>
+						<div className="mt-2 text-sm text-muted-foreground animated fadeIn pl-6">
+							<ul className="list-disc list-inside space-y-1">
+								{challenge.hints.map((hint, i) => (
+									// biome-ignore lint/suspicious/noArrayIndexKey: Static hints
+									<li key={i}>{hint}</li>
 								))}
 							</ul>
 						</div>
-					)}
+					</details>
+				</div>
+			)}
+
+			<Card>
+				<CardHeader>
+					<CardTitle>Your Explanation</CardTitle>
+					<CardDescription>
+						Explain this concept simply, as if to a non-technical person.
+					</CardDescription>
+				</CardHeader>
+				<CardContent>
+					<Textarea
+						placeholder="Type your explanation here..."
+						className="min-h-[200px] resize-none p-4 text-base"
+						value={input}
+						onChange={(e) => setInput(e.target.value)}
+					/>
 				</CardContent>
-				<CardFooter>
-					<Button variant="outline" className="w-full" asChild>
-						<Link href="/practice">
-							<RefreshCw className="mr-2 h-4 w-4" />
-							Try More Challenges
-						</Link>
+				<CardFooter className="flex justify-end gap-2">
+					<Button
+						onClick={handleSubmit}
+						disabled={!input.trim() || isSubmitting}
+						size="lg"
+						className="min-w-[150px]"
+					>
+						{isSubmitting ? (
+							"Grading..."
+						) : (
+							<>
+								Submit Answer <Send className="ml-2 h-4 w-4" />
+							</>
+						)}
 					</Button>
 				</CardFooter>
+			</Card>
+
+			<Card>
+				<CardHeader>
+					<CardTitle className="text-sm font-medium">Pro Tips</CardTitle>
+				</CardHeader>
+				<CardContent className="text-sm text-muted-foreground space-y-1">
+					<p>• Use analogies from everyday life (cooking, driving, etc.)</p>
+					<p>• Avoid using acronyms without defining them</p>
+					<p>• Keep sentences short and punchy</p>
+				</CardContent>
 			</Card>
 		</div>
 	);

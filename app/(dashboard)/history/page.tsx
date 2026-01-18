@@ -152,7 +152,7 @@ export default function HistoryPage() {
 					) : (
 						<div className="grid gap-4">
 							{practiceHistory.map((item) => (
-								<Link key={item.id} href={`/practice/${item.id}`}>
+								<Link key={item.id} href={`/history/practice/${item.id}`}>
 									<Card className="hover:bg-accent/50 transition-colors cursor-pointer">
 										<CardHeader>
 											<div className="flex items-start justify-between gap-4">
@@ -225,7 +225,7 @@ export default function HistoryPage() {
 					) : (
 						<div className="grid gap-4">
 							{translationHistory.map((item) => (
-								<Link key={item.id} href={`/history/${item.id}`}>
+								<Link key={item.id} href={`/history/translation/${item.id}`}>
 									<Card className="hover:bg-accent/50 transition-colors cursor-pointer">
 										<CardHeader>
 											<div className="flex items-start justify-between gap-4">
