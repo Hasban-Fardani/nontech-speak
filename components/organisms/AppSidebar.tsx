@@ -3,6 +3,7 @@
 import {
 	Dumbbell,
 	History as HistoryIcon,
+	LayoutDashboard,
 	Library,
 	MessageSquare,
 	Settings,
@@ -82,6 +83,25 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 				</SidebarMenu>
 			</SidebarHeader>
 			<SidebarContent>
+				<SidebarGroup>
+					<SidebarGroupLabel>Platform</SidebarGroupLabel>
+					<SidebarGroupContent>
+						<SidebarMenu>
+							<SidebarMenuItem>
+								<SidebarMenuButton
+									asChild
+									isActive={pathname === "/dashboard"}
+									tooltip="Dashboard"
+								>
+									<Link href="/dashboard">
+										<LayoutDashboard />
+										<span>Dashboard</span>
+									</Link>
+								</SidebarMenuButton>
+							</SidebarMenuItem>
+						</SidebarMenu>
+					</SidebarGroupContent>
+				</SidebarGroup>
 				<SidebarGroup>
 					<SidebarGroupLabel>Application</SidebarGroupLabel>
 					<SidebarGroupContent>

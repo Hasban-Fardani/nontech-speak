@@ -4,24 +4,22 @@ import { format } from "date-fns";
 import {
 	ArrowLeft,
 	Bot,
-	Briefcase,
 	Calendar,
 	Check,
 	Clock,
-	Coffee,
 	Copy,
-	Laugh,
+	Eye,
+	EyeOff,
 	MoreVertical,
 	Quote,
-	RefreshCw,
 	Share2,
 	Sparkles,
+	Trash2,
 	User,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { toast } from "sonner";
-import { DUMMY_HISTORY } from "@/components/organisms/HistoryList";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -39,20 +37,146 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface HistoryDetailProps {
 	id: string;
 }
 
+type Translation = {
+	id: string;
+	technicalText: string;
+	simplifiedText: string;
+	audienceType: "parent" | "partner" | "friend" | "child" | "boss";
+	createdAt: string;
+	isPublic: boolean;
+	aiModel?: string | null;
+	inputMethod?: string | null;
+};
+
 export function HistoryDetail({ id }: HistoryDetailProps) {
 	const router = useRouter();
 	const [copiedOriginal, setCopiedOriginal] = React.useState(false);
 	const [copiedTranslation, setCopiedTranslation] = React.useState(false);
+	const [translation, setTranslation] = React.useState<Translation | null>(
+		null,
+	);
+	const [loading, setLoading] = React.useState(true);
+	const [deleting, setDeleting] = React.useState(false);
+	const [togglingVisibility, setTogglingVisibility] = React.useState(false);
 
-	// Find the item
-	const item = DUMMY_HISTORY.find((h) => h.id === id);
+	React.useEffect(() => {
+		async function fetchTranslation() {
+			try {
+				const response = await fetch(`/api/translation/${id}`);
+				if (!response.ok) {
+					throw new Error("Translation not found");
+				}
+				const data = await response.json();
+				setTranslation(data);
+			} catch (error) {
+				console.error("Failed to fetch translation:", error);
+				setTranslation(null);
+			} finally {
+				setLoading(false);
+			}
+		}
 
-	if (!item) {
+		fetchTranslation();
+	}, [id]);
+
+	const copyToClipboard = (text: string, isOriginal: boolean) => {
+		navigator.clipboard.writeText(text);
+		if (isOriginal) {
+			setCopiedOriginal(true);
+			setTimeout(() => setCopiedOriginal(false), 2000);
+		} else {
+			setCopiedTranslation(true);
+			setTimeout(() => setCopiedTranslation(false), 2000);
+		}
+		toast.info("Copied to clipboard");
+	};
+
+	const handleShare = () => {
+		const shareUrl = `${window.location.origin}/share/${id}`;
+		navigator.clipboard.writeText(shareUrl);
+		toast.success("Share link copied to clipboard!");
+	};
+
+	const handleDelete = async () => {
+		if (!confirm("Are you sure you want to delete this translation?")) {
+			return;
+		}
+
+		setDeleting(true);
+		try {
+			const response = await fetch(`/api/translation/${id}`, {
+				method: "DELETE",
+			});
+
+			if (!response.ok) {
+				throw new Error("Failed to delete");
+			}
+
+			toast.success("Translation deleted successfully");
+			router.push("/history");
+		} catch (error) {
+			toast.error("Failed to delete translation");
+			setDeleting(false);
+		}
+	};
+
+	const handleToggleVisibility = async () => {
+		if (!translation) return;
+
+		setTogglingVisibility(true);
+		try {
+			const response = await fetch(`/api/translation/${id}/visibility`, {
+				method: "PATCH",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ isPublic: !translation.isPublic }),
+			});
+
+			if (!response.ok) {
+				throw new Error("Failed to update visibility");
+			}
+
+			const updatedTranslation = await response.json();
+			setTranslation({
+				...translation,
+				isPublic: updatedTranslation.data.isPublic,
+			});
+
+			toast.success(
+				updatedTranslation.data.isPublic
+					? "Translation is now public"
+					: "Translation is now private",
+			);
+		} catch (error) {
+			toast.error("Failed to update visibility");
+		} finally {
+			setTogglingVisibility(false);
+		}
+	};
+
+	if (loading) {
+		return (
+			<div className="space-y-6 max-w-5xl mx-auto pb-10">
+				<Skeleton className="h-10 w-40" />
+				<div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+					<div className="lg:col-span-2 space-y-6">
+						<Skeleton className="h-64 w-full" />
+						<Skeleton className="h-48 w-full" />
+					</div>
+					<div className="space-y-6">
+						<Skeleton className="h-64 w-full" />
+					</div>
+				</div>
+			</div>
+		);
+	}
+
+	if (!translation) {
 		return (
 			<div className="flex flex-col items-center justify-center h-[50vh] space-y-4">
 				<h2 className="text-2xl font-bold">Translation Not Found</h2>
@@ -68,35 +192,6 @@ export function HistoryDetail({ id }: HistoryDetailProps) {
 		);
 	}
 
-	const copyToClipboard = (text: string, isOriginal: boolean) => {
-		navigator.clipboard.writeText(text);
-		if (isOriginal) {
-			setCopiedOriginal(true);
-			setTimeout(() => setCopiedOriginal(false), 2000);
-		} else {
-			setCopiedTranslation(true);
-			setTimeout(() => setCopiedTranslation(false), 2000);
-		}
-		toast.info("Copied to clipboard");
-	};
-
-	// Mock icons based on logic (in real app, these would be saved in DB)
-	const toneIcon =
-		item.audience === "friend" ? (
-			<Laugh className="h-4 w-4" />
-		) : item.audience === "child" ? (
-			<Coffee className="h-4 w-4" />
-		) : (
-			<Briefcase className="h-4 w-4" />
-		);
-
-	const toneLabel =
-		item.audience === "friend"
-			? "Casual"
-			: item.audience === "child"
-				? "Simple"
-				: "Professional";
-
 	return (
 		<div className="space-y-6 max-w-5xl mx-auto pb-10">
 			{/* Header Navigation */}
@@ -111,19 +206,48 @@ export function HistoryDetail({ id }: HistoryDetailProps) {
 				</Button>
 
 				<div className="flex gap-2">
+					<Button
+						variant={translation.isPublic ? "default" : "outline"}
+						size="sm"
+						onClick={handleToggleVisibility}
+						disabled={togglingVisibility || deleting}
+						className="gap-2"
+					>
+						{togglingVisibility ? (
+							<>
+								<Clock className="h-4 w-4 animate-spin" />
+								Updating...
+							</>
+						) : translation.isPublic ? (
+							<>
+								<Eye className="h-4 w-4" />
+								Public
+							</>
+						) : (
+							<>
+								<EyeOff className="h-4 w-4" />
+								Private
+							</>
+						)}
+					</Button>
 					<DropdownMenu>
 						<DropdownMenuTrigger asChild>
-							<Button variant="outline" size="icon">
+							<Button variant="outline" size="icon" disabled={deleting || togglingVisibility}>
 								<MoreVertical className="h-4 w-4" />
 							</Button>
 						</DropdownMenuTrigger>
 						<DropdownMenuContent align="end">
-							<DropdownMenuItem onClick={() => toast.success("Shared (Mock)")}>
+							<DropdownMenuItem onClick={handleShare}>
 								<Share2 className="mr-2 h-4 w-4" />
 								Share
 							</DropdownMenuItem>
-							<DropdownMenuItem className="text-destructive">
-								Delete
+							<DropdownMenuItem
+								className="text-destructive"
+								onClick={handleDelete}
+								disabled={deleting}
+							>
+								<Trash2 className="mr-2 h-4 w-4" />
+								{deleting ? "Deleting..." : "Delete"}
 							</DropdownMenuItem>
 						</DropdownMenuContent>
 					</DropdownMenu>
@@ -146,14 +270,16 @@ export function HistoryDetail({ id }: HistoryDetailProps) {
 											Simplified Explanation
 										</CardTitle>
 										<CardDescription>
-											Translated for {item.audience}
+											Translated for {translation.audienceType}
 										</CardDescription>
 									</div>
 								</div>
 								<Button
 									variant="ghost"
 									size="sm"
-									onClick={() => copyToClipboard(item.translatedText, false)}
+									onClick={() =>
+										copyToClipboard(translation.simplifiedText, false)
+									}
 								>
 									{copiedTranslation ? (
 										<Check className="h-4 w-4" />
@@ -166,19 +292,17 @@ export function HistoryDetail({ id }: HistoryDetailProps) {
 						<CardContent>
 							<div className="prose dark:prose-invert max-w-none">
 								<p className="text-lg leading-relaxed text-foreground font-medium">
-									{item.translatedText}
+									{translation.simplifiedText}
 								</p>
 							</div>
 						</CardContent>
 						<CardFooter className="bg-background/40 border-t border-primary/10 justify-between py-3">
 							<div className="flex items-center gap-2 text-xs text-muted-foreground">
 								<Bot className="h-3 w-3" />
-								<span>Generated by Gemini 1.5 Pro</span>
+								<span>
+									Generated by {translation.aiModel || "Gemini 2.0 Flash"}
+								</span>
 							</div>
-							<Button size="sm" variant="ghost" className="text-xs h-8">
-								<RefreshCw className="mr-2 h-3 w-3" />
-								Regenerate
-							</Button>
 						</CardFooter>
 					</Card>
 
@@ -195,7 +319,9 @@ export function HistoryDetail({ id }: HistoryDetailProps) {
 								<Button
 									variant="ghost"
 									size="sm"
-									onClick={() => copyToClipboard(item.originalText, true)}
+									onClick={() =>
+										copyToClipboard(translation.technicalText, true)
+									}
 								>
 									{copiedOriginal ? (
 										<Check className="h-4 w-4" />
@@ -207,7 +333,7 @@ export function HistoryDetail({ id }: HistoryDetailProps) {
 						</CardHeader>
 						<CardContent>
 							<p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
-								{item.originalText}
+								{translation.technicalText}
 							</p>
 						</CardContent>
 					</Card>
@@ -226,7 +352,7 @@ export function HistoryDetail({ id }: HistoryDetailProps) {
 									<span>Date</span>
 								</div>
 								<span className="font-medium text-sm">
-									{format(item.createdAt, "MMM d, yyyy")}
+									{format(new Date(translation.createdAt), "MMM d, yyyy")}
 								</span>
 							</div>
 							<Separator />
@@ -237,7 +363,7 @@ export function HistoryDetail({ id }: HistoryDetailProps) {
 									<span>Time</span>
 								</div>
 								<span className="font-medium text-sm">
-									{format(item.createdAt, "h:mm a")}
+									{format(new Date(translation.createdAt), "h:mm a")}
 								</span>
 							</div>
 							<Separator />
@@ -248,26 +374,19 @@ export function HistoryDetail({ id }: HistoryDetailProps) {
 									<span>Audience</span>
 								</div>
 								<Badge variant="secondary" className="capitalize">
-									{item.audience}
+									{translation.audienceType}
 								</Badge>
 							</div>
 							<Separator />
 
 							<div className="flex items-center justify-between">
 								<div className="flex items-center gap-2 text-sm text-muted-foreground">
-									{toneIcon}
-									<span>Tone</span>
+									<Bot className="h-4 w-4" />
+									<span>Input Method</span>
 								</div>
-								<span className="font-medium text-sm">{toneLabel}</span>
-							</div>
-							<Separator />
-
-							<div className="flex items-center justify-between">
-								<div className="flex items-center gap-2 text-sm text-muted-foreground">
-									<Clock className="h-4 w-4" />
-									<span>Duration</span>
-								</div>
-								<span className="font-medium text-sm">1.2s</span>
+								<Badge variant="outline" className="capitalize">
+									{translation.inputMethod || "text"}
+								</Badge>
 							</div>
 						</CardContent>
 					</Card>
@@ -277,11 +396,11 @@ export function HistoryDetail({ id }: HistoryDetailProps) {
 							<h4 className="font-semibold mb-2 text-sm">Model Info</h4>
 							<p className="text-xs text-muted-foreground mb-4">
 								This translation was generated using the{" "}
-								<strong>Gemini 1.5 Pro</strong> model with a temperature setting
-								of 0.7.
+								<strong>{translation.aiModel || "Gemini 2.0 Flash"}</strong>{" "}
+								model.
 							</p>
 							<Badge variant="outline" className="text-[10px] bg-background">
-								v1.0.0-beta
+								{translation.isPublic ? "Public" : "Private"}
 							</Badge>
 						</CardContent>
 					</Card>

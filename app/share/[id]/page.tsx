@@ -1,6 +1,9 @@
+"use client";
+
 import { ArrowLeft, Quote } from "lucide-react";
-import type { Metadata } from "next";
 import Link from "next/link";
+import { useParams } from "next/navigation";
+import * as React from "react";
 import { TextToSpeech } from "@/components/molecules/TextToSpeech";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,27 +12,51 @@ import {
 	CardFooter,
 	CardHeader,
 } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 
-// In a real app, this would be async because of the DB call
-// But for now we just return a component
-export const metadata: Metadata = {
-	title: "Shared Translation | NonTechSpeak",
-	description: "A simplified explanation shared via NonTechSpeak.",
+type SharedTranslation = {
+	id: string;
+	technicalText: string;
+	simplifiedText: string;
+	audienceType: string;
+	aiModel?: string | null;
+	viewCount: number;
+	upvotesCount: number;
+	createdAt: string;
 };
 
-// Mock data generator for the demo
-function getMockData(_id: string) {
-	return {
-		originalText:
-			"The Kubernetes control plane manages the worker nodes and the Pods in the cluster. In production, the control plane usually runs across multiple computers and a cluster usually runs multiple nodes, providing fault-tolerance and high availability.",
-		translatedText:
-			"Think of Kubernetes like a manager in a big restaurant (the cluster). The 'control plane' is the head chef and the managers who make all the important decisions. \n\nThey tell the other cooks and staff (worker nodes) what to do and make sure there are enough people to handle the orders (Pods/containers). \n\nIn a busy restaurant (production), you wouldn't just have one manager. You'd have a team of them working together, so if one gets sick or goes on break, the restaurant keeps running smoothly (fault-tolerance/high availability).",
-		audience: "Partner",
-	};
-}
+export default function SharePage() {
+	const params = useParams();
+	const id = params.id as string;
 
-export default function SharePage({ params }: { params: { id: string } }) {
-	const data = getMockData(params.id);
+	const [translation, setTranslation] =
+		React.useState<SharedTranslation | null>(null);
+	const [loading, setLoading] = React.useState(true);
+	const [error, setError] = React.useState<string | null>(null);
+
+	React.useEffect(() => {
+		async function fetchSharedTranslation() {
+			try {
+				const response = await fetch(`/api/share/${id}`);
+
+				if (!response.ok) {
+					const errorData = await response.json();
+					throw new Error(errorData.error || "Failed to fetch translation");
+				}
+
+				const data = await response.json();
+				setTranslation(data);
+			} catch (err) {
+				setError(err instanceof Error ? err.message : "Unknown error");
+			} finally {
+				setLoading(false);
+			}
+		}
+
+		if (id) {
+			fetchSharedTranslation();
+		}
+	}, [id]);
 
 	return (
 		<div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col">
@@ -48,59 +75,95 @@ export default function SharePage({ params }: { params: { id: string } }) {
 
 			{/* Main Content */}
 			<main className="flex-1 container max-w-3xl mx-auto p-6 flex flex-col items-center justify-center space-y-8">
-				<div className="text-center space-y-2">
-					<span className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-primary text-primary-foreground hover:bg-primary/80">
-						Shared Translation
-					</span>
-					<h1 className="text-3xl font-bold tracking-tight">
-						Simplified Explanation
-					</h1>
-					<p className="text-muted-foreground">
-						Someone shared this simplified technical concept with you.
-					</p>
-				</div>
+				{loading ? (
+					<div className="w-full space-y-6">
+						<div className="text-center space-y-2">
+							<Skeleton className="h-6 w-32 mx-auto" />
+							<Skeleton className="h-10 w-64 mx-auto" />
+							<Skeleton className="h-5 w-96 mx-auto" />
+						</div>
+						<Skeleton className="h-64 w-full" />
+						<Skeleton className="h-32 w-full" />
+					</div>
+				) : error ? (
+					<div className="text-center space-y-4">
+						<div className="text-6xl">🔒</div>
+						<h1 className="text-2xl font-bold">
+							{error.includes("private")
+								? "Private Translation"
+								: "Translation Not Found"}
+						</h1>
+						<p className="text-muted-foreground max-w-md">{error}</p>
+						<Link href="/">
+							<Button>
+								<ArrowLeft className="mr-2 h-4 w-4" />
+								Go to Homepage
+							</Button>
+						</Link>
+					</div>
+				) : translation ? (
+					<>
+						<div className="text-center space-y-2">
+							<span className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-primary text-primary-foreground hover:bg-primary/80">
+								Shared Translation
+							</span>
+							<h1 className="text-3xl font-bold tracking-tight">
+								Simplified Explanation
+							</h1>
+							<p className="text-muted-foreground">
+								Someone shared this simplified technical concept with you.
+							</p>
+						</div>
 
-				<div className="grid gap-6 w-full">
-					{/* Result Card */}
-					<Card className="border-2 border-primary/10 shadow-lg">
-						<CardHeader className="bg-primary/5 pb-8">
-							<div className="flex items-center justify-between">
-								<div className="flex items-center gap-2 text-primary font-medium">
-									<Quote className="h-4 w-4 rotate-180" />
-									Simplified for a {data.audience}
-								</div>
-								<TextToSpeech text={data.translatedText} />
-							</div>
-						</CardHeader>
-						<CardContent className="-mt-4">
-							<div className="bg-white dark:bg-slate-900 rounded-xl p-6 shadow-sm border">
-								<p className="text-lg leading-relaxed whitespace-pre-wrap text-slate-800 dark:text-slate-100">
-									{data.translatedText}
+						<div className="grid gap-6 w-full">
+							{/* Result Card */}
+							<Card className="border-2 border-primary/10 shadow-lg">
+								<CardHeader className="bg-primary/5 pb-8">
+									<div className="flex items-center justify-between">
+										<div className="flex items-center gap-2 text-primary font-medium capitalize">
+											<Quote className="h-4 w-4 rotate-180" />
+											Simplified for a {translation.audienceType}
+										</div>
+										<TextToSpeech text={translation.simplifiedText} />
+									</div>
+								</CardHeader>
+								<CardContent className="-mt-4">
+									<div className="bg-white dark:bg-slate-900 rounded-xl p-6 shadow-sm border">
+										<p className="text-lg leading-relaxed whitespace-pre-wrap text-slate-800 dark:text-slate-100">
+											{translation.simplifiedText}
+										</p>
+									</div>
+								</CardContent>
+								<CardFooter className="justify-between text-sm text-muted-foreground pt-0">
+									<span>
+										{translation.viewCount} view
+										{translation.viewCount !== 1 ? "s" : ""}
+									</span>
+									<span className="text-xs">
+										Generated by {translation.aiModel || "Gemini AI"}
+									</span>
+								</CardFooter>
+							</Card>
+
+							{/* Original Text (Collapsed/Secondary) */}
+							<div className="rounded-lg border bg-muted/50 p-4">
+								<h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+									Original Technical Text
+								</h4>
+								<p className="text-sm text-muted-foreground italic">
+									"{translation.technicalText}"
 								</p>
 							</div>
-						</CardContent>
-						<CardFooter className="justify-between text-sm text-muted-foreground pt-0">
-							<span>ID: {params.id}</span>
-						</CardFooter>
-					</Card>
+						</div>
 
-					{/* Original Text (Collapsed/Secondary) */}
-					<div className="rounded-lg border bg-muted/50 p-4">
-						<h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
-							Original Technical Text
-						</h4>
-						<p className="text-sm text-muted-foreground italic">
-							"{data.originalText}"
-						</p>
-					</div>
-				</div>
-
-				<Link href="/">
-					<Button className="mt-4" size="lg">
-						Translate Your Own Content
-						<ArrowLeft className="ml-2 h-4 w-4 rotate-180" />
-					</Button>
-				</Link>
+						<Link href="/">
+							<Button className="mt-4" size="lg">
+								Translate Your Own Content
+								<ArrowLeft className="ml-2 h-4 w-4 rotate-180" />
+							</Button>
+						</Link>
+					</>
+				) : null}
 			</main>
 
 			{/* Footer */}

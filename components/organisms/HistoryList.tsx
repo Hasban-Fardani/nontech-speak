@@ -2,6 +2,7 @@
 
 import { format } from "date-fns";
 import { ArrowRight, Calendar, Eye, Lock, Sparkles } from "lucide-react";
+import * as React from "react";
 import { ShareButton } from "@/components/molecules/ShareButton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,79 +13,81 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-// TODO: Replace with actual type from Drizzle schema
 export type HistoryItem = {
 	id: string;
-	originalText: string;
-	translatedText: string;
-	audience:
-		| "child"
-		| "teenager"
-		| "adult"
-		| "expert"
-		| "parent"
-		| "partner"
-		| "friend";
-	createdAt: Date;
+	technicalText: string;
+	simplifiedText: string;
+	audienceType: "parent" | "partner" | "friend" | "child" | "boss";
+	createdAt: string;
 	isPublic: boolean;
+	aiModel?: string | null;
 };
 
-// TODO: Remove this dummy data when connecting to backend
-export const DUMMY_HISTORY: HistoryItem[] = [
-	{
-		id: "1",
-		originalText:
-			"Kubernetes is a container orchestration system for automating application deployment, scaling, and management.",
-		translatedText:
-			"Think of Kubernetes like a manager at a busy shipping port. Instead of workers moving boxes (containers) manually, this manager automatically decides where every box goes, how many workers are needed, and makes sure everything runs smoothly without crashing.",
-		audience: "friend",
-		createdAt: new Date("2026-03-10T10:00:00"),
-		isPublic: true,
-	},
-	{
-		id: "2",
-		originalText:
-			"The CAP theorem states that a distributed data store can only provide two of the following three guarantees: Consistency, Availability, and Partition Tolerance.",
-		translatedText:
-			"Imagine you run a phone network. You want it to always work (Availability), give everyone the same info (Consistency), and handle broken cables (Partition Tolerance). The rule says you can't have all three perfectly at the same time; you have to pick the two that matter most.",
-		audience: "child",
-		createdAt: new Date("2026-03-09T15:30:00"),
-		isPublic: false,
-	},
-	{
-		id: "3",
-		originalText:
-			"Dependency injection is a design pattern in which an object or function receives other objects or functions that it depends on.",
-		translatedText:
-			"Instead of building your own tools every time you want to fix a car, someone hands you the exact wrench you need right when you need it. That way, you just focus on fixing the car, not making the tools.",
-		audience: "parent",
-		createdAt: new Date("2026-03-08T09:15:00"),
-		isPublic: true,
-	},
-];
-
 export function HistoryList() {
-	// TODO: Fetch data from backend API
-	// const { data: history, isLoading } = useQuery(...)
-	const history = DUMMY_HISTORY;
+	const [history, setHistory] = React.useState<HistoryItem[]>([]);
+	const [loading, setLoading] = React.useState(true);
+	const [error, setError] = React.useState<string | null>(null);
 
-	// Mock Practice History Data
-	const PRACTICE_HISTORY = [
-		{
-			id: "p1",
-			challenge: "Explain 'API' to a Grandparent",
-			score: 85,
-			date: new Date("2026-03-12T14:00:00"),
-		},
-		{
-			id: "p2",
-			challenge: "Explain 'Cloud Computing' to a 10-year-old",
-			score: 92,
-			date: new Date("2026-03-11T09:30:00"),
-		},
-	];
+	React.useEffect(() => {
+		async function fetchHistory() {
+			try {
+				const response = await fetch("/api/translation/list?limit=50");
+				if (!response.ok) {
+					throw new Error("Failed to fetch history");
+				}
+				const data = await response.json();
+				setHistory(data);
+			} catch (err) {
+				setError(err instanceof Error ? err.message : "Unknown error");
+			} finally {
+				setLoading(false);
+			}
+		}
+
+		fetchHistory();
+	}, []);
+
+	if (loading) {
+		return (
+			<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+				{[...Array(6)].map((_, i) => (
+					<Card key={i}>
+						<CardHeader>
+							<Skeleton className="h-4 w-20 mb-2" />
+							<Skeleton className="h-6 w-full" />
+						</CardHeader>
+						<CardContent>
+							<Skeleton className="h-20 w-full" />
+						</CardContent>
+					</Card>
+				))}
+			</div>
+		);
+	}
+
+	if (error) {
+		return (
+			<div className="text-center py-12">
+				<p className="text-destructive">Error: {error}</p>
+			</div>
+		);
+	}
+
+	if (history.length === 0) {
+		return (
+			<div className="text-center py-12">
+				<p className="text-muted-foreground">
+					No translations yet. Start by creating your first translation!
+				</p>
+				<Button asChild className="mt-4">
+					<a href="/translate">Create Translation</a>
+				</Button>
+			</div>
+		);
+	}
 
 	return (
 		<div className="space-y-6">
@@ -104,7 +107,7 @@ export function HistoryList() {
 								<CardHeader className="pb-3">
 									<div className="flex justify-between items-start mb-2">
 										<Badge variant="outline" className="capitalize">
-											{item.audience}
+											{item.audienceType}
 										</Badge>
 										<div className="flex items-center text-xs text-muted-foreground gap-3">
 											<div
@@ -119,12 +122,12 @@ export function HistoryList() {
 											</div>
 											<div className="flex items-center">
 												<Calendar className="mr-1 h-3 w-3" />
-												{format(item.createdAt, "MMM d, yyyy")}
+												{format(new Date(item.createdAt), "MMM d, yyyy")}
 											</div>
 										</div>
 									</div>
 									<CardTitle className="text-base line-clamp-2 leading-tight">
-										{item.originalText}
+										{item.technicalText}
 									</CardTitle>
 								</CardHeader>
 								<CardContent className="flex-1 pb-3">
@@ -133,7 +136,7 @@ export function HistoryList() {
 											<Sparkles className="h-3 w-3" />
 											<span>Simplified:</span>
 										</div>
-										{item.translatedText}
+										{item.simplifiedText}
 									</div>
 								</CardContent>
 								<CardFooter className="pt-3 border-t bg-slate-50 dark:bg-slate-900/50 flex gap-2">
@@ -160,49 +163,10 @@ export function HistoryList() {
 				</TabsContent>
 
 				<TabsContent value="practice" className="mt-6">
-					<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-						{PRACTICE_HISTORY.map((item) => (
-							<Card key={item.id} className="hover:shadow-md transition-shadow">
-								<CardHeader className="pb-3">
-									<div className="flex justify-between items-start mb-2">
-										<Badge
-											variant="secondary"
-											className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400"
-										>
-											Challenge
-										</Badge>
-										<div className="flex items-center text-xs text-muted-foreground">
-											<Calendar className="mr-1 h-3 w-3" />
-											{format(item.date, "MMM d, yyyy")}
-										</div>
-									</div>
-									<CardTitle className="text-base">{item.challenge}</CardTitle>
-								</CardHeader>
-								<CardContent>
-									<div className="flex items-center justify-between mt-2">
-										<span className="text-sm text-muted-foreground">Score</span>
-										<Badge
-											variant={item.score >= 90 ? "default" : "secondary"}
-											className="text-base px-3"
-										>
-											{item.score}/100
-										</Badge>
-									</div>
-								</CardContent>
-								<CardFooter className="pt-3 border-t bg-slate-50 dark:bg-slate-900/50">
-									<Button
-										variant="ghost"
-										size="sm"
-										className="w-full text-xs"
-										asChild
-									>
-										<a href={`/practice/${item.id}`}>
-											View Feedback <ArrowRight className="ml-2 h-3 w-3" />
-										</a>
-									</Button>
-								</CardFooter>
-							</Card>
-						))}
+					<div className="text-center py-12">
+						<p className="text-muted-foreground">
+							Practice history coming soon!
+						</p>
 					</div>
 				</TabsContent>
 			</Tabs>

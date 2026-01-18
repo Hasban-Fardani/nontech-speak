@@ -54,12 +54,12 @@ export function LoginForm() {
 				{
 					email: data.email,
 					password: data.password,
-					callbackURL: "/translate",
+					callbackURL: "/dashboard",
 				},
 				{
 					onSuccess: () => {
 						toast.success("Logged in successfully");
-						router.push("/translate");
+						router.push("/dashboard");
 					},
 					onError: (ctx) => {
 						toast.error(ctx.error.message);
@@ -78,7 +78,7 @@ export function LoginForm() {
 		await authClient.signIn.social(
 			{
 				provider: "github",
-				callbackURL: "/translate",
+				callbackURL: "/dashboard",
 			},
 			{
 				onSuccess: () => {},

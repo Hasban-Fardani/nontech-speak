@@ -65,12 +65,12 @@ export function RegisterForm() {
 					email: data.email,
 					password: data.password,
 					name: data.name,
-					callbackURL: "/translate",
+					callbackURL: "/dashboard",
 				},
 				{
 					onSuccess: () => {
 						toast.success("Account created successfully");
-						router.push("/translate");
+						router.push("/dashboard");
 					},
 					onError: (ctx) => {
 						toast.error(ctx.error.message);
@@ -89,7 +89,7 @@ export function RegisterForm() {
 		await authClient.signIn.social(
 			{
 				provider: "github",
-				callbackURL: "/translate",
+				callbackURL: "/dashboard",
 			},
 			{
 				onError: (ctx) => {
