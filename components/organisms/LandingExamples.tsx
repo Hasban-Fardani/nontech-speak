@@ -1,6 +1,6 @@
 "use client";
 
-import { Library, ArrowRight } from "lucide-react";
+import { ArrowRight, Library } from "lucide-react";
 import Link from "next/link";
 import * as React from "react";
 import { ExampleCard } from "@/components/molecules/ExampleCard";
@@ -73,7 +73,7 @@ export function LandingExamples() {
 			<div className="container px-4 md:px-6 mx-auto">
 				<div className="flex flex-col items-center justify-center space-y-4 text-center mb-16">
 					<div className="space-y-2">
-                        <div className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-indigo-100 text-indigo-800 hover:bg-indigo-100/80 dark:bg-indigo-900/30 dark:text-indigo-400 mb-4">
+						<div className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-indigo-100 text-indigo-800 hover:bg-indigo-100/80 dark:bg-indigo-900/30 dark:text-indigo-400 mb-4">
 							<Library className="w-3 h-3 mr-1" />
 							Examples Library
 						</div>
@@ -81,7 +81,8 @@ export function LandingExamples() {
 							See It in Action
 						</h2>
 						<p className="mx-auto max-w-[700px] text-gray-500 md:text-xl dark:text-gray-400">
-							Browse real-world examples of technical concepts simplified for different audiences.
+							Browse real-world examples of technical concepts simplified for
+							different audiences.
 						</p>
 					</div>
 				</div>
@@ -101,13 +102,13 @@ export function LandingExamples() {
 					))}
 				</div>
 
-                <div className="flex justify-center">
-                    <Link href="/examples">
-                         <Button size="lg" className="h-12 px-8 rounded-full text-base">
-                            View More Examples <ArrowRight className="ml-2 h-4 w-4" />
-                         </Button>
-                    </Link>
-                </div>
+				<div className="flex justify-center">
+					<Link href="/examples">
+						<Button size="lg" className="h-12 px-8 rounded-full text-base">
+							View More Examples <ArrowRight className="ml-2 h-4 w-4" />
+						</Button>
+					</Link>
+				</div>
 			</div>
 		</section>
 	);

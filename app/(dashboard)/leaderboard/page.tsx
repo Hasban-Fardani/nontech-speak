@@ -2,6 +2,10 @@
 
 import { Crown, Medal } from "lucide-react";
 import * as React from "react";
+import {
+	type LeaderboardEntry,
+	LeaderboardItem,
+} from "@/components/molecules/LeaderboardItem";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -13,7 +17,6 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LeaderboardItem, type LeaderboardEntry } from "@/components/molecules/LeaderboardItem";
 
 export default function LeaderboardPage() {
 	const [period, setPeriod] = React.useState("all_time");

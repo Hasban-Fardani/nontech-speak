@@ -3,7 +3,10 @@
 import { Crown } from "lucide-react";
 import Link from "next/link";
 import * as React from "react";
-import { LeaderboardItem, type LeaderboardEntry } from "@/components/molecules/LeaderboardItem";
+import {
+	type LeaderboardEntry,
+	LeaderboardItem,
+} from "@/components/molecules/LeaderboardItem";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -80,16 +83,16 @@ export function LandingLeaderboard() {
 						<CardContent className="p-0">
 							<div className="divide-y">
 								{data.map((entry) => (
-									<LeaderboardItem 
-                                        key={entry.rank} 
-                                        entry={entry} 
-                                        className="border-none rounded-none first:rounded-t-lg last:rounded-b-lg hover:bg-muted/50 transition-colors" 
-                                    />
+									<LeaderboardItem
+										key={entry.rank}
+										entry={entry}
+										className="border-none rounded-none first:rounded-t-lg last:rounded-b-lg hover:bg-muted/50 transition-colors"
+									/>
 								))}
 							</div>
 						</CardContent>
 					</Card>
-					
+
 					<div className="mt-8 text-center">
 						<Link href="/leaderboard">
 							<Button variant="outline" size="lg" className="rounded-full">

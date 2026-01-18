@@ -2,7 +2,10 @@
 
 import { Crown } from "lucide-react";
 import * as React from "react";
-import { LeaderboardItem, type LeaderboardEntry } from "@/components/molecules/LeaderboardItem";
+import {
+	type LeaderboardEntry,
+	LeaderboardItem,
+} from "@/components/molecules/LeaderboardItem";
 import { PublicHeader } from "@/components/organisms/PublicHeader";
 import {
 	Card,

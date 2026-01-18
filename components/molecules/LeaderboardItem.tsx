@@ -61,9 +61,7 @@ export function LeaderboardItem({ entry, className }: LeaderboardItemProps) {
 				</div>
 			</div>
 			<div className="text-right">
-				<div className="font-bold text-lg">
-					{entry.xp.toLocaleString()} XP
-				</div>
+				<div className="font-bold text-lg">{entry.xp.toLocaleString()} XP</div>
 			</div>
 		</div>
 	);
