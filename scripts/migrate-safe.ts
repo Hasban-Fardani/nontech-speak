@@ -3,13 +3,30 @@ import { neon } from "@neondatabase/serverless";
 const sql = neon(process.env.DATABASE_URL!);
 
 async function runMigration() {
-  console.log("🚀 Adding geminiApiKey to users table...");
+  console.log("🚀 Creating translation_votes table...");
 
   try {
-    // Add geminiApiKey column to users table
+    // Create translation_votes table
     await sql`
-			ALTER TABLE "users" 
-			ADD COLUMN IF NOT EXISTS "gemini_api_key" text
+			CREATE TABLE IF NOT EXISTS "translation_votes" (
+				"id" text PRIMARY KEY NOT NULL,
+				"user_id" text NOT NULL REFERENCES "users"("id") ON DELETE CASCADE,
+				"translation_id" text NOT NULL REFERENCES "translations"("id") ON DELETE CASCADE,
+				"vote_type" text NOT NULL CHECK ("vote_type" IN ('up', 'down')),
+				"created_at" timestamp DEFAULT now() NOT NULL
+			)
+		`;
+
+    // Create unique index
+    await sql`
+			CREATE UNIQUE INDEX IF NOT EXISTS "translation_votes_user_translation_idx" 
+			ON "translation_votes" ("user_id", "translation_id")
+		`;
+
+    // Create translation index
+    await sql`
+			CREATE INDEX IF NOT EXISTS "translation_votes_translation_idx" 
+			ON "translation_votes" ("translation_id")
 		`;
 
     console.log("✅ Migration completed successfully!");

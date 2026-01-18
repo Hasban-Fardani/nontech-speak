@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/card";
 
 interface ExampleCardProps {
+	id: string;
 	title: string;
 	description: string;
 	tags: string[];
@@ -24,6 +25,7 @@ interface ExampleCardProps {
 }
 
 export function ExampleCard({
+	id,
 	title,
 	description,
 	tags,

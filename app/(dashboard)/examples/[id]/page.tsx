@@ -2,78 +2,118 @@
 
 import { ArrowLeft, Copy, ThumbsDown, ThumbsUp } from "lucide-react";
 import Link from "next/link";
-import { use, useState } from "react";
+import { useParams } from "next/navigation";
+import * as React from "react";
 import { toast } from "sonner";
 import { CommentSection } from "@/components/organisms/CommentSection";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 
-// Mock Data (Shared source of truth idea)
-const EXAMPLES = {
-	"1": {
-		id: "1",
-		title: "Kubernetes for 5-year-olds",
-		description:
-			"Imagine a shipping container port. The huge ship is the server, and the containers are the apps. Kubernetes is the crane operator deciding where each container goes.",
-		content:
-			"Imagine a shipping container port. The huge ship is the server, and the containers are the apps. Kubernetes is the crane operator deciding where each container goes. It ensures the ship isn't overloaded and that containers are stacked safely. If a container falls off (crashes), the operator immediately puts a new one in its place.",
-		tags: ["DevOps", "Infrastructure"],
-		upvotes: 120,
-		category: "DevOps",
-		date: "2023-10-15",
-		comments: [
-			{
-				id: "c1",
-				author: { name: "DevOpsDave" },
-				content: "This is the best explanation I've seen!",
-				createdAt: "2 days ago",
-			},
-		],
-	},
-	// ... we'd fetch this by ID in real app
+type Translation = {
+	id: string;
+	technicalText: string;
+	simplifiedText: string;
+	audienceType: string;
+	aiModel?: string | null;
+	viewCount: number;
+	upvotesCount: number;
+	createdAt: string;
 };
 
-export default function ExampleDetailPage({
-	params,
-}: {
-	params: Promise<{ id: string }>;
-}) {
-	const { id } = use(params);
-	// Mock usage to satisfy linter until real data fetch
-	console.log("Fetching example:", id);
-	// Fallback to mock item 1 for demo if ID doesn't match
-	const example = EXAMPLES["1" as keyof typeof EXAMPLES] || EXAMPLES["1"];
-	// In real app: const example = EXAMPLES[id] || notFound();
+export default function ExampleDetailPage() {
+	const params = useParams();
+	const id = params.id as string;
 
-	const [upvotes, setUpvotes] = useState(example.upvotes);
-	const [voteStatus, setVoteStatus] = useState<"up" | "down" | null>(null);
+	const [translation, setTranslation] = React.useState<Translation | null>(
+		null,
+	);
+	const [loading, setLoading] = React.useState(true);
+	const [upvotes, setUpvotes] = React.useState(0);
+	const [voteStatus, setVoteStatus] = React.useState<"up" | "down" | null>(
+		null,
+	);
+	const [voting, setVoting] = React.useState(false);
 
-	const handleUpvote = () => {
-		if (voteStatus === "up") {
-			setUpvotes((prev) => prev - 1);
-			setVoteStatus(null);
-		} else {
-			setUpvotes((prev) => (voteStatus === "down" ? prev + 2 : prev + 1));
-			setVoteStatus("up");
+	React.useEffect(() => {
+		async function fetchTranslation() {
+			try {
+				const response = await fetch(`/api/share/${id}`);
+				if (!response.ok) throw new Error("Not found");
+				const data = await response.json();
+				setTranslation(data);
+				setUpvotes(data.upvotesCount);
+
+				// Fetch vote status
+				const voteResponse = await fetch(`/api/translation/${id}/vote`);
+				if (voteResponse.ok) {
+					const voteData = await voteResponse.json();
+					setVoteStatus(voteData.voteType);
+				}
+			} catch (error) {
+				console.error("Failed to fetch:", error);
+			} finally {
+				setLoading(false);
+			}
 		}
-	};
 
-	const handleDownvote = () => {
-		if (voteStatus === "down") {
-			setUpvotes((prev) => prev + 1);
-			setVoteStatus(null);
-		} else {
-			setUpvotes((prev) => (voteStatus === "up" ? prev - 2 : prev - 1));
-			setVoteStatus("down");
+		fetchTranslation();
+	}, [id]);
+
+	const handleVote = async (type: "up" | "down") => {
+		setVoting(true);
+		try {
+			const response = await fetch(`/api/translation/${id}/vote`, {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ voteType: type }),
+			});
+
+			if (!response.ok) {
+				throw new Error("Failed to vote");
+			}
+
+			const data = await response.json();
+			setUpvotes(data.upvotesCount);
+			setVoteStatus(data.voteType);
+		} catch (error) {
+			toast.error("Failed to vote. Please try again.");
+		} finally {
+			setVoting(false);
 		}
 	};
 
 	const handleCopy = () => {
-		navigator.clipboard.writeText(example.content);
-		toast.success("Copied to clipboard");
+		if (translation) {
+			navigator.clipboard.writeText(translation.simplifiedText);
+			toast.success("Copied to clipboard");
+		}
 	};
+
+	if (loading) {
+		return (
+			<div className="space-y-6 max-w-3xl mx-auto">
+				<Skeleton className="h-10 w-40" />
+				<Skeleton className="h-64 w-full" />
+			</div>
+		);
+	}
+
+	if (!translation) {
+		return (
+			<div className="text-center py-20">
+				<h2 className="text-2xl font-bold mb-4">Example Not Found</h2>
+				<Button asChild>
+					<Link href="/examples">
+						<ArrowLeft className="mr-2 h-4 w-4" />
+						Back to Library
+					</Link>
+				</Button>
+			</div>
+		);
+	}
 
 	return (
 		<div className="space-y-6 max-w-3xl mx-auto">
@@ -89,7 +129,9 @@ export default function ExampleDetailPage({
 
 			<div className="space-y-4">
 				<div className="flex items-start justify-between">
-					<h1 className="text-3xl font-bold tracking-tight">{example.title}</h1>
+					<h1 className="text-3xl font-bold tracking-tight">
+						{translation.technicalText}
+					</h1>
 					<div className="flex gap-2">
 						<Button variant="outline" size="icon" onClick={handleCopy}>
 							<Copy className="h-4 w-4" />
@@ -97,17 +139,18 @@ export default function ExampleDetailPage({
 					</div>
 				</div>
 				<div className="flex gap-2">
-					{example.tags.map((tag) => (
-						<Badge key={tag} variant="secondary">
-							{tag}
-						</Badge>
-					))}
+					<Badge variant="secondary" className="capitalize">
+						{translation.audienceType}
+					</Badge>
+					{translation.aiModel && (
+						<Badge variant="outline">{translation.aiModel}</Badge>
+					)}
 				</div>
 			</div>
 
 			<Card>
 				<CardContent className="p-6 text-lg leading-relaxed">
-					{example.content}
+					{translation.simplifiedText}
 				</CardContent>
 			</Card>
 
@@ -117,7 +160,8 @@ export default function ExampleDetailPage({
 						variant={voteStatus === "up" ? "secondary" : "ghost"}
 						size="sm"
 						className={voteStatus === "up" ? "text-primary bg-primary/10" : ""}
-						onClick={handleUpvote}
+						onClick={() => handleVote("up")}
+						disabled={voting}
 					>
 						<ThumbsUp className="h-4 w-4 mr-2" />
 						Upvote
@@ -129,18 +173,19 @@ export default function ExampleDetailPage({
 						className={
 							voteStatus === "down" ? "text-destructive bg-destructive/10" : ""
 						}
-						onClick={handleDownvote}
+						onClick={() => handleVote("down")}
+						disabled={voting}
 					>
 						<ThumbsDown className="h-4 w-4" />
 					</Button>
 				</div>
 				<Separator orientation="vertical" className="h-8" />
 				<span className="text-sm text-muted-foreground">
-					Posted on {example.date}
+					{translation.viewCount} views
 				</span>
 			</div>
 
-			<CommentSection initialComments={example.comments} />
+			<CommentSection initialComments={[]} />
 		</div>
 	);
 }

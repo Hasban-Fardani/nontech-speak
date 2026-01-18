@@ -5,6 +5,7 @@ import { audioRoutes } from "./routes/audio";
 import { shareRoutes } from "./routes/share";
 import { translationRoutes } from "./routes/translation";
 import { userRoutes } from "./routes/user";
+import { voteRoutes } from "./routes/vote";
 
 // Better Auth middleware for session handling
 const betterAuth = new Elysia({ name: "better-auth" })
@@ -44,7 +45,9 @@ const app = new Elysia()
   .use(translationRoutes)
   .use(audioRoutes)
   .use(shareRoutes)
-.use(userRoutes)  .get("/api/health", () => ({
+  .use(userRoutes)
+  .use(voteRoutes)
+  .get("/api/health", () => ({
     status: "ok",
     timestamp: new Date().toISOString(),
   }))

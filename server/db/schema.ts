@@ -279,3 +279,31 @@ export type AudienceType = typeof audienceTypes.$inferSelect;
 export type NewAudienceType = typeof audienceTypes.$inferInsert;
 export type AiModel = typeof aiModels.$inferSelect;
 export type NewAiModel = typeof aiModels.$inferInsert;
+
+// Translation votes table (upvote/downvote)
+export const translationVotes = pgTable(
+"translation_votes",
+{
+id: text("id")
+.primaryKey()
+			.$defaultFn(() => createId()),
+		userId: text("user_id")
+			.notNull()
+			.references(() => users.id, { onDelete: "cascade" }),
+		translationId: text("translation_id")
+			.notNull()
+			.references(() => translations.id, { onDelete: "cascade" }),
+		voteType: text("vote_type", { enum: ["up", "down"] }).notNull(),
+		createdAt: timestamp("created_at").notNull().defaultNow(),
+	},
+	(table) => ({
+uniqueUserTranslation: uniqueIndex(
+"translation_votes_user_translation_idx",
+).on(table.userId, table.translationId),
+translationIdx: index("translation_votes_translation_idx").on(
+table.translationId,
+),
+}),
+);
+
+export type TranslationVote = typeof translationVotes.$inferSelect;
