@@ -64,6 +64,7 @@ export function AudioRecorder({ onRecordingComplete }: AudioRecorderProps) {
 				{isRecording ? (
 					Array.from({ length: 12 }).map((_, i) => (
 						<div
+							// biome-ignore lint/suspicious/noArrayIndexKey: Visualizer elements do not require unique IDs
 							key={i}
 							className="w-1.5 bg-primary rounded-full animate-pulse"
 							style={{

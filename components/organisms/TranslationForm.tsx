@@ -30,6 +30,7 @@ import {
 	FormLabel,
 	FormMessage,
 } from "@/components/ui/form";
+import { Label } from "@/components/ui/label";
 import {
 	Select,
 	SelectContent,
@@ -37,6 +38,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/lib/api-client";
@@ -59,6 +61,7 @@ export function TranslationForm() {
 	const [inputType, setInputType] = React.useState<"text" | "audio" | "file">(
 		"text",
 	);
+	const [isPublic, setIsPublic] = React.useState(false);
 
 	const form = useForm<TranslationValues>({
 		resolver: zodResolver(translationSchema),
@@ -307,7 +310,21 @@ export function TranslationForm() {
 						</Form>
 					</Tabs>
 				</CardContent>
-				<CardFooter>
+				<CardFooter className="flex-col gap-4">
+					<div className="flex items-center space-x-2 w-full p-4 bg-muted/30 rounded-lg border border-dashed">
+						<Switch
+							id="public-mode"
+							checked={isPublic}
+							onCheckedChange={setIsPublic}
+						/>
+						<Label htmlFor="public-mode" className="flex-1 cursor-pointer">
+							<span className="font-medium block">Contribute to Community</span>
+							<span className="font-normal text-muted-foreground text-xs">
+								Make this translation public on the landing page
+							</span>
+						</Label>
+					</div>
+
 					<Button
 						type="submit"
 						form="translation-form"

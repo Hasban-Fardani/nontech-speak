@@ -1,6 +1,13 @@
 # Backend Implementation Todo List
 
 This document outlines the backend requirements to support the new UI features (Share, History, Settings, Audio).
+> **NOTE**: All backend implementation is currently deferred. Focus is restricted to UI only.
+
+## 0. Immediate Backlog (Rolled Back Changes)
+The following items were attempted but rolled back to strictly separate UI from Backend work:
+*   [ ] **Schema Update**: Add `translations` table and `user_settings` table (or columns) to `server/db/schema.ts`.
+*   [ ] **Migration**: Run `bun db:push` to apply changes.
+*   [ ] **API**: Implement endpoints below.
 
 ## 1. Database Schema (Drizzle ORM)
 

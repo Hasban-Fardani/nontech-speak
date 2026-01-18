@@ -1,7 +1,7 @@
 "use client";
 
 import { format } from "date-fns";
-import { ArrowRight, Calendar, Sparkles } from "lucide-react";
+import { ArrowRight, Calendar, Eye, Lock, Sparkles } from "lucide-react";
 import * as React from "react";
 import { ShareButton } from "@/components/molecules/ShareButton";
 import { Badge } from "@/components/ui/badge";
@@ -29,6 +29,7 @@ export type HistoryItem = {
 		| "partner"
 		| "friend";
 	createdAt: Date;
+	isPublic: boolean;
 };
 
 // TODO: Remove this dummy data when connecting to backend
@@ -41,6 +42,7 @@ export const DUMMY_HISTORY: HistoryItem[] = [
 			"Think of Kubernetes like a manager at a busy shipping port. Instead of workers moving boxes (containers) manually, this manager automatically decides where every box goes, how many workers are needed, and makes sure everything runs smoothly without crashing.",
 		audience: "friend",
 		createdAt: new Date("2024-03-10T10:00:00"),
+		isPublic: true,
 	},
 	{
 		id: "2",
@@ -50,6 +52,7 @@ export const DUMMY_HISTORY: HistoryItem[] = [
 			"Imagine you run a phone network. You want it to always work (Availability), give everyone the same info (Consistency), and handle broken cables (Partition Tolerance). The rule says you can't have all three perfectly at the same time; you have to pick the two that matter most.",
 		audience: "child",
 		createdAt: new Date("2024-03-09T15:30:00"),
+		isPublic: false,
 	},
 	{
 		id: "3",
@@ -59,6 +62,7 @@ export const DUMMY_HISTORY: HistoryItem[] = [
 			"Instead of building your own tools every time you want to fix a car, someone hands you the exact wrench you need right when you need it. That way, you just focus on fixing the car, not making the tools.",
 		audience: "parent",
 		createdAt: new Date("2024-03-08T09:15:00"),
+		isPublic: true,
 	},
 ];
 
@@ -80,9 +84,21 @@ export function HistoryList() {
 								<Badge variant="outline" className="capitalize">
 									{item.audience}
 								</Badge>
-								<div className="flex items-center text-xs text-muted-foreground">
-									<Calendar className="mr-1 h-3 w-3" />
-									{format(item.createdAt, "MMM d, yyyy")}
+								<div className="flex items-center text-xs text-muted-foreground gap-3">
+									<div
+										className="flex items-center"
+										title={item.isPublic ? "Public" : "Private"}
+									>
+										{item.isPublic ? (
+											<Eye className="h-3 w-3 mr-1" />
+										) : (
+											<Lock className="h-3 w-3 mr-1" />
+										)}
+									</div>
+									<div className="flex items-center">
+										<Calendar className="mr-1 h-3 w-3" />
+										{format(item.createdAt, "MMM d, yyyy")}
+									</div>
 								</div>
 							</div>
 							<CardTitle className="text-base line-clamp-2 leading-tight">

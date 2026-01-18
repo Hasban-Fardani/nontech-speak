@@ -1,5 +1,6 @@
 import { ArrowRight, Bot, Brain, Lock, Sparkles, Users } from "lucide-react";
 import Link from "next/link";
+import { PublicFeed } from "@/components/organisms/PublicFeed";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -154,6 +155,8 @@ export default function LandingPage() {
 					</div>
 				</section>
 			</main>
+
+			<PublicFeed />
 
 			<footer className="flex flex-col gap-2 sm:flex-row py-6 w-full shrink-0 items-center px-4 md:px-6 border-t">
 				<p className="text-xs text-gray-500 dark:text-gray-400">

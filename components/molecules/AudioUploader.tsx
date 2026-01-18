@@ -70,10 +70,16 @@ export function AudioUploader({ onFileSelect }: AudioUploaderProps) {
 					? "border-primary bg-primary/5"
 					: "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
 			}`}
-			onDragEnter={handleDrag}
 			onDragLeave={handleDrag}
 			onDragOver={handleDrag}
 			onDrop={handleDrop}
+			role="button"
+			tabIndex={0}
+			onKeyDown={(e) => {
+				if (e.key === "Enter" || e.key === " ") {
+					triggerInput();
+				}
+			}}
 		>
 			<input
 				ref={inputRef}

@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 
-export default function VerifyEmailPage() {
+function VerifyEmailContent() {
 	const searchParams = useSearchParams();
 	const [status, setStatus] = useState<"loading" | "success" | "error">(
 		"loading",
@@ -56,6 +56,7 @@ export default function VerifyEmailPage() {
 						fill="none"
 						stroke="currentColor"
 						viewBox="0 0 24 24"
+						aria-label="Success"
 					>
 						<path
 							strokeLinecap="round"
@@ -90,6 +91,7 @@ export default function VerifyEmailPage() {
 					fill="none"
 					stroke="currentColor"
 					viewBox="0 0 24 24"
+					aria-label="Error"
 				>
 					<path
 						strokeLinecap="round"
@@ -113,5 +115,20 @@ export default function VerifyEmailPage() {
 				Back to Sign In
 			</Link>
 		</div>
+	);
+}
+
+export default function VerifyEmailPage() {
+	return (
+		<Suspense
+			fallback={
+				<div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-8 text-center">
+					<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4" />
+					<p>Loading...</p>
+				</div>
+			}
+		>
+			<VerifyEmailContent />
+		</Suspense>
 	);
 }

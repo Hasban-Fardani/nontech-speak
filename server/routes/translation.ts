@@ -39,7 +39,6 @@ export const translationRoutes = new Elysia({ prefix: "/api/translation" })
 						"type" in chunk &&
 						chunk.type === "error"
 					) {
-						// @ts-expect-error
 						const errorMessage = chunk.error?.message || "Unknown stream error";
 						throw new Error(`AI Stream Error: ${errorMessage}`);
 					}
@@ -47,7 +46,6 @@ export const translationRoutes = new Elysia({ prefix: "/api/translation" })
 					if (typeof chunk === "string") {
 						simplifiedText += chunk;
 					} else if (chunk && typeof chunk === "object" && "content" in chunk) {
-						// @ts-expect-error
 						simplifiedText += chunk.content;
 					}
 				}

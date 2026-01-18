@@ -50,7 +50,7 @@ const settingsSchema = z.object({
 	] as const),
 	defaultAudience: z.enum(["parent", "partner", "friend", "child"] as const),
 	tone: z.enum(["professional", "casual", "funny"] as const),
-	notifications: z.boolean().default(true),
+	notifications: z.boolean(),
 
 	// Appearance
 	theme: z.enum(["light", "dark", "system"] as const),
@@ -59,7 +59,7 @@ const settingsSchema = z.object({
 type SettingsValues = z.infer<typeof settingsSchema>;
 
 // Mock default values
-const defaultValues: Partial<SettingsValues> = {
+const defaultValues: SettingsValues = {
 	googleApiKey: "sk-proj-**********************",
 	openaiApiKey: "",
 	anthropicApiKey: "",

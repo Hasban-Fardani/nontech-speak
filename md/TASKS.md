@@ -66,7 +66,7 @@
 - [ ] Create practice page UI
 - [ ] Add challenge selection system
 - [ ] Implement feedback display
-- [x] Create practice history view (UI Only implemented at /history)
+- [ ] Create practice history view
 - [ ] Add score tracking
 
 ## Phase 7: Example Library
