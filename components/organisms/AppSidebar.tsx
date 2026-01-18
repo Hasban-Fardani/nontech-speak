@@ -1,4 +1,4 @@
-import { Calendar, Home, Inbox, Search, Settings, Languages, MessageSquare, LogOut, User } from "lucide-react"
+import { Calendar, Home, Inbox, Search, Settings, Languages, MessageSquare, LogOut, History as HistoryIcon, User } from "lucide-react"
 
 import {
   Sidebar,
@@ -16,14 +16,14 @@ import SignOutButton from "@/components/molecules/SignOutButton"
 // Menu items.
 const items = [
   {
-    title: "Translation",
+    title: "Translate",
     url: "/translate",
-    icon: Languages,
+    icon: MessageSquare,
   },
   {
     title: "History",
-    url: "/history", 
-    icon: Calendar,
+    url: "/history",
+    icon: HistoryIcon,
   },
   {
     title: "Settings",

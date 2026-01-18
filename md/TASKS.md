@@ -57,8 +57,10 @@
 - [ ] Implement AI evaluation endpoint
 - [ ] Create practice page UI
 - [ ] Add challenge selection system
+- [ ] Create practice page UI
+- [ ] Add challenge selection system
 - [ ] Implement feedback display
-- [ ] Create practice history view
+- [x] Create practice history view (UI Only implemented at /history)
 - [ ] Add score tracking
 
 ## Phase 7: Example Library
