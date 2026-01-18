@@ -134,7 +134,7 @@ export function TranslationForm() {
 			if (response.data?.success && response.data.data) {
 				setResult(response.data.data.simplifiedText);
 				toast.success("Translation complete!", {
-					description: `Translated using ${data.model} (Mock)`,
+					description: `Translated using ${data.model}`,
 				});
 			}
 		} catch (error) {
@@ -271,7 +271,7 @@ export function TranslationForm() {
 												onRecordingComplete={(blob) => {
 													console.log("Recorded blob:", blob);
 													toast.success("Audio recorded!", {
-														description: "Ready to translate (Mock)",
+														description: "Ready to translate",
 													});
 												}}
 											/>
