@@ -62,7 +62,7 @@ const PUBLIC_TRANSLATIONS = [
 export function PublicFeed() {
 	return (
 		<section className="py-12 bg-slate-50 dark:bg-slate-900/50">
-			<div className="container px-4 md:px-6">
+			<div className="container px-4 md:px-6 mx-auto">
 				<div className="flex flex-col items-center justify-center text-center space-y-4 mb-10">
 					<Badge
 						variant="outline"
@@ -137,8 +137,8 @@ export function PublicFeed() {
 				</div>
 
 				<div className="mt-10 text-center">
-					<Button variant="outline" size="lg">
-						Browse All Examples
+					<Button variant="outline" size="lg" asChild>
+						<Link href="/library">Browse All Examples</Link>
 					</Button>
 				</div>
 			</div>

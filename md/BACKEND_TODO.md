@@ -34,6 +34,30 @@ Stores the history of translations for users.
 | `createdAt` | `timestamp` | Creation time. |
 | `updatedAt` | `timestamp` | Last update. |
 
+#### `examples` (New)
+Stores the community examples/analogies.
+| Column | Type | Description |
+| :--- | :--- | :--- |
+| `id` | `text` (PK) | Cuid2. |
+| `title` | `text` | Title of the analogy. |
+| `description` | `text` | Short description. |
+| `content` | `text` | Full markdown content. |
+| `tags` | `json` | Array of strings (e.g. ['DevOps', 'AI']). |
+| `category` | `varchar` | Main category. |
+| `upvotes` | `integer` | Count of upvotes. |
+| `authorId` | `text` (FK) | User who created it. |
+| `createdAt` | `timestamp` | Creation time. |
+
+#### `comments` (New)
+Comments on examples.
+| Column | Type | Description |
+| :--- | :--- | :--- |
+| `id` | `text` (PK) | Cuid2. |
+| `exampleId` | `text` (FK) | Reference to `examples.id`. |
+| `userId` | `text` (FK) | Author of comment. |
+| `content` | `text` | Comment text. |
+| `createdAt` | `timestamp` | Creation time. |
+
 #### `user_settings` (or add columns to `user` table)
 It might be cleaner to keep `user` table simple and have a separate settings table, or just add a JSON column `preferences` to the `user` table if the schema allows. Let's assume a separate logical grouping or columns.
 
@@ -143,6 +167,56 @@ Implement these routes in `server/routes/` or standard Next.js API routes if mov
 
 ---
 
+### E. Practice Mode (`server/routes/practice.ts`)
+
+#### 1. `GET /api/practice/challenges` (New)
+*   **Auth**: Required.
+*   **Query Params**: `difficulty`, `status`, `tags`.
+*   **Logic**: Fetch available challenges.
+*   **Response**: List of challenges with status (locked/unlocked/completed).
+
+#### 2. `POST /api/practice/submit` (New)
+*   **Auth**: Required.
+*   **Body**: `{ challengeId, input, audioBlob? }`.
+*   **Logic**:
+    *   AI Grading (Score, Feedback, Strengths, Improvements).
+    *   Update User XP.
+    *   Save attempt to history.
+*   **Response**: Grading result.
+
+### F. Leaderboard (`server/routes/leaderboard.ts`)
+
+#### 1. `GET /api/leaderboard` (New)
+*   **Auth**: Required.
+*   **Query Params**: `period` (today, week, month, all_time).
+*   **Logic**:
+    *   Aggregate User XP based on period.
+    *   Rank users.
+
+### G. Examples Library (`server/routes/examples.ts`)
+
+#### 1. `GET /api/examples` (Public/Private)
+*   **Auth**: Optional (Public for `/library`, Auth for `/examples` dashboard if needed).
+*   **Query Params**: `search`, `category`, `sort`.
+*   **Response**: List of examples.
+
+#### 2. `GET /api/examples/:id` (Public/Private)
+*   **Auth**: Optional.
+*   **Response**: Example details + Comments.
+
+#### 3. `POST /api/examples/:id/upvote`
+*   **Auth**: Required.
+*   **Logic**: Increment upvote count. Prevent double voting per user (requires `upvotes` table or array tracking).
+
+#### 4. `POST /api/examples/:id/comments`
+*   **Auth**: Required.
+*   **Body**: `{ content }`.
+*   **Logic**: Add comment.
+
+---
+
+---
+
 ## 3. Files to Create/Modify
 
 ### Schema
@@ -153,6 +227,9 @@ Implement these routes in `server/routes/` or standard Next.js API routes if mov
 *   [ ] `server/routes/share.ts` - Create new file for public sharing.
 *   [ ] `server/routes/user.ts` - Add settings updates.
 *   [ ] `server/routes/audio.ts` - Create new file for STT.
+*   [ ] `server/routes/practice.ts` - Create new file for Practice Mode.
+*   [ ] `server/routes/leaderboard.ts` - Create new file for Leaderboard.
+*   [ ] `server/routes/examples.ts` - Create new file for Examples Library.
 
 ### Config
 *   [ ] `lib/encryption.ts` - Helper to encrypt/decrypt API keys.

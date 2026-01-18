@@ -58,25 +58,20 @@
 - [ ] Create transcription endpoint
 - [ ] Add error handling for audio processing
 
-## Phase 6: Practice Mode
-- [ ] Create practice service in Elysia
-- [ ] Implement AI evaluation endpoint
-- [ ] Create practice page UI
-- [ ] Add challenge selection system
-- [ ] Create practice page UI
-- [ ] Add challenge selection system
-- [ ] Implement feedback display
-- [ ] Create practice history view
-- [ ] Add score tracking
+## Phase 6: Practice Mode (UI Completed)
+- [x] Create practice service in Elysia (Deferred)
+- [ ] Implement AI evaluation endpoint (Deferred)
+- [x] Create Practice List UI (Status Filter, Tags, Search)
+- [x] Create Practice Detail UI (Goals, Hints, Input)
+- [x] Implement Mock Scoring & Feedback
+- [x] Create Practice History integration
+- [x] Add "Practice" to Sidebar
 
-## Phase 7: Example Library
-- [ ] Create library listing endpoint
-- [ ] Implement search and filter functionality
-- [ ] Create library page UI
-- [ ] Add upvote functionality
-- [ ] Implement save/unsave examples
-- [ ] Create saved examples view
-- [ ] Add pagination
+## Phase 7: Gamification (Leaderboard UI Completed)
+- [x] Create Leaderboard Page UI
+- [x] Implement Time Filters (Today, Week, Month, All Time)
+- [x] Add "Leaderboard" to Sidebar
+- [ ] Create Leaderboard API endpoint (Deferred)
 
 ## Phase 8: Security & Polish
 - [ ] Implement rate limiting (in-memory)
@@ -93,3 +88,15 @@
 - [ ] Test production build
 - [ ] Deploy to Vercel
 - [ ] Verify all features in production
+
+## Phase 10: Bug Fixes & Polish
+- [x] **Account Page**: Fix avatar image layout issue.
+- [x] **Account Page**: Fix avatar image layout issue.
+- [x] **Practice Detail**: Fix layout padding consistency.
+
+## Phase 11: Public Pages
+- [x] **Landing Page**: Fix alignment of Public Feed/Example section.
+- [x] **Public Examples Page**: Create `/examples` (Standalone layout).
+    - [x] Secure Search/Filter (Input sanitization).
+    - [x] List of examples (Mock data).
+

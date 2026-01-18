@@ -1,6 +1,7 @@
 import { ArrowRight, Bot, Brain, Sparkles, Users } from "lucide-react";
 import Link from "next/link";
 import { PublicFeed } from "@/components/organisms/PublicFeed";
+import { PublicHeader } from "@/components/organisms/PublicHeader";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,25 +10,7 @@ export default function LandingPage() {
 	return (
 		<div className="flex flex-col min-h-screen">
 			{/* Header */}
-			<header className="px-4 lg:px-6 h-16 flex items-center border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
-				<Link className="flex items-center justify-center" href="/">
-					<div className="h-8 w-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold mr-2">
-						N
-					</div>
-					<span className="font-bold text-xl">Non-Tech Speak</span>
-				</Link>
-				<nav className="ml-auto flex gap-4 sm:gap-6">
-					<Link
-						className="text-sm font-medium hover:underline underline-offset-4 flex items-center"
-						href="/login"
-					>
-						Sign In
-					</Link>
-					<Link href="/register">
-						<Button size="sm">Get Started</Button>
-					</Link>
-				</nav>
-			</header>
+			<PublicHeader />
 
 			<main className="flex-1">
 				{/* Hero Section */}
@@ -46,7 +29,7 @@ export default function LandingPage() {
 								<Sparkles className="w-3 h-3 mr-1 inline" /> AI-Powered
 								Translation
 							</Badge>
-							<h1 className="text-4xl font-extrabold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl/none bg-clip-text text-transparent bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 dark:from-blue-400 dark:via-purple-400 dark:to-pink-400">
+							<h1 className="text-4xl font-extrabold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl/none bg-clip-text text-transparent bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 dark:from-blue-400 dark:via-purple-400 dark:to-pink-400 pb-4">
 								Turn Jargon into <br className="hidden md:inline" />
 								Plain English
 							</h1>
@@ -160,7 +143,7 @@ export default function LandingPage() {
 
 			<footer className="flex flex-col gap-2 sm:flex-row py-6 w-full shrink-0 items-center px-4 md:px-6 border-t">
 				<p className="text-xs text-gray-500 dark:text-gray-400">
-					© 2024 Non-Tech Speak. All rights reserved.
+					© 2026 Non-Tech Speak. All rights reserved.
 				</p>
 				<nav className="sm:ml-auto flex gap-4 sm:gap-6">
 					<Link className="text-xs hover:underline underline-offset-4" href="#">

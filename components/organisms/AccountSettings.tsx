@@ -78,7 +78,7 @@ export function AccountSettings() {
 				</CardHeader>
 				<CardContent className="space-y-4">
 					<div className="flex items-center gap-4">
-						<div className="h-16 w-16 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center overflow-hidden">
+						<div className="relative h-16 w-16 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center overflow-hidden">
 							{session?.user?.image ? (
 								<Image
 									src={session.user.image}
