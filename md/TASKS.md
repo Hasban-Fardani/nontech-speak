@@ -58,20 +58,23 @@
 - [ ] Create transcription endpoint
 - [ ] Add error handling for audio processing
 
-## Phase 6: Practice Mode (UI Completed)
-- [x] Create practice service in Elysia (Deferred)
-- [ ] Implement AI evaluation endpoint (Deferred)
+## Phase 6: Practice Mode
+- [x] Create practice service in Elysia
+- [x] Implement AI evaluation endpoint
 - [x] Create Practice List UI (Status Filter, Tags, Search)
 - [x] Create Practice Detail UI (Goals, Hints, Input)
-- [x] Implement Mock Scoring & Feedback
+- [x] Implement Real Scoring & Feedback with AI
 - [x] Create Practice History integration
 - [x] Add "Practice" to Sidebar
+- [x] Connect Practice pages to backend API
 
-## Phase 7: Gamification (Leaderboard UI Completed)
+## Phase 7: Gamification
 - [x] Create Leaderboard Page UI
 - [x] Implement Time Filters (Today, Week, Month, All Time)
 - [x] Add "Leaderboard" to Sidebar
-- [ ] Create Leaderboard API endpoint (Deferred)
+- [x] Create Leaderboard API endpoint
+- [x] Connect Leaderboard to real XP data
+- [x] Make Leaderboard publicly accessible
 
 ## Phase 8: Security & Polish
 - [ ] Implement rate limiting (in-memory)
@@ -79,24 +82,25 @@
 - [ ] Configure security headers
 - [ ] Setup Sentry for error tracking
 - [ ] Add API documentation with Elysia plugin
-- [ ] Mobile responsiveness check
+- [x] Mobile responsiveness check
 - [ ] Dark mode polish
 
 ## Phase 9: Deployment
 - [ ] Setup production environment variables
 - [ ] Configure Vercel deployment
-- [ ] Test production build
+- [x] Test production build
 - [ ] Deploy to Vercel
 - [ ] Verify all features in production
 
 ## Phase 10: Bug Fixes & Polish
 - [x] **Account Page**: Fix avatar image layout issue.
-- [x] **Account Page**: Fix avatar image layout issue.
 - [x] **Practice Detail**: Fix layout padding consistency.
 
-## Phase 11: Public Pages
-- [x] **Landing Page**: Fix alignment of Public Feed/Example section.
-- [x] **Public Examples Page**: Create `/examples` (Standalone layout).
-    - [x] Secure Search/Filter (Input sanitization).
-    - [x] List of examples (Mock data).
+## Phase 11: Public Pages & Data Integration
+- [x] **Landing Page**: Add live data sections (Examples, Leaderboard, Translations)
+- [x] **Public Rankings Page** (`/rankings`): Connect to real leaderboard API
+- [x] **Public Library Page** (`/library`): Connect to real examples API
+- [x] **Shared Components**: Create reusable LeaderboardItem and ExampleCard
+- [x] **Public Feed**: Display recent public translations on landing page
+- [x] **Data Consistency**: Ensure dashboard and public pages use same data source
 

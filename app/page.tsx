@@ -3,6 +3,7 @@ import Link from "next/link";
 import { LandingExamples } from "@/components/organisms/LandingExamples";
 import { LandingLeaderboard } from "@/components/organisms/LandingLeaderboard";
 import { PublicHeader } from "@/components/organisms/PublicHeader";
+import { PublicTranslations } from "@/components/organisms/PublicTranslations";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -117,6 +118,7 @@ export default function LandingPage() {
 				{/* Live Data Sections */}
 				<LandingExamples />
 				<LandingLeaderboard />
+				<PublicTranslations />
 
 				{/* CTA Section */}
 				<section className="w-full py-12 md:py-24 lg:py-32">

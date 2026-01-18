@@ -169,49 +169,58 @@ Implement these routes in `server/routes/` or standard Next.js API routes if mov
 
 ### E. Practice Mode (`server/routes/practice.ts`)
 
-#### 1. `GET /api/practice/challenges` (New)
+#### 1. `GET /api/practice/challenges` ✅ COMPLETED
 *   **Auth**: Required.
 *   **Query Params**: `difficulty`, `status`, `tags`.
-*   **Logic**: Fetch available challenges.
-*   **Response**: List of challenges with status (locked/unlocked/completed).
+*   **Logic**: Fetch available challenges from database.
+*   **Response**: List of challenges with metadata.
 
-#### 2. `POST /api/practice/submit` (New)
+#### 2. `POST /api/practice/submit` ✅ COMPLETED
 *   **Auth**: Required.
-*   **Body**: `{ challengeId, input, audioBlob? }`.
+*   **Body**: `{ challengeId, userExplanation }`.
 *   **Logic**:
-    *   AI Grading (Score, Feedback, Strengths, Improvements).
-    *   Update User XP.
-    *   Save attempt to history.
-*   **Response**: Grading result.
+    *   AI Grading using Gemini (Score, Feedback, Strengths, Improvements).
+    *   Update User XP in database.
+    *   Save attempt to `practices` table.
+*   **Response**: Grading result with XP earned.
+
+#### 3. `GET /api/practice/history` ✅ COMPLETED
+*   **Auth**: Required.
+*   **Logic**: Fetch user's practice attempts.
+*   **Response**: List of practice history.
+
+#### 4. `GET /api/practice/:id` ✅ COMPLETED
+*   **Auth**: Required.
+*   **Logic**: Fetch specific practice attempt details.
+*   **Response**: Practice details with feedback.
 
 ### F. Leaderboard (`server/routes/leaderboard.ts`)
 
-#### 1. `GET /api/leaderboard` (New)
-*   **Auth**: Required.
+#### 1. `GET /api/leaderboard` ✅ COMPLETED
+*   **Auth**: Optional (Public access supported).
 *   **Query Params**: `period` (today, week, month, all_time).
 *   **Logic**:
     *   Aggregate User XP based on period.
-    *   Rank users.
+    *   Rank users by totalXp.
+    *   Support public viewing without authentication.
+*   **Response**: Ranked list of users with XP.
 
 ### G. Examples Library (`server/routes/examples.ts`)
 
-#### 1. `GET /api/examples` (Public/Private)
-*   **Auth**: Optional (Public for `/library`, Auth for `/examples` dashboard if needed).
-*   **Query Params**: `search`, `category`, `sort`.
-*   **Response**: List of examples.
+#### 1. `GET /api/public/feed` ✅ COMPLETED (via share.ts)
+*   **Auth**: Public.
+*   **Query Params**: `limit`.
+*   **Logic**: Fetch public translations ordered by creation date.
+*   **Response**: List of public examples with user info.
 
-#### 2. `GET /api/examples/:id` (Public/Private)
-*   **Auth**: Optional.
-*   **Response**: Example details + Comments.
+#### 2. `GET /api/examples/:id` ✅ COMPLETED (via examples/[id])
+*   **Auth**: Required (Dashboard).
+*   **Response**: Example details.
 
-#### 3. `POST /api/examples/:id/upvote`
+#### 3. `POST /api/vote/:translationId` ✅ COMPLETED
 *   **Auth**: Required.
-*   **Logic**: Increment upvote count. Prevent double voting per user (requires `upvotes` table or array tracking).
-
-#### 4. `POST /api/examples/:id/comments`
-*   **Auth**: Required.
-*   **Body**: `{ content }`.
-*   **Logic**: Add comment.
+*   **Body**: `{ voteType: 'upvote' | 'downvote' }`.
+*   **Logic**: Toggle vote on translation/example.
 
 ---
 
@@ -220,26 +229,36 @@ Implement these routes in `server/routes/` or standard Next.js API routes if mov
 ## 3. Files to Create/Modify
 
 ### Schema
-*   [ ] `server/db/schema.ts` - Add `translations` table.
+*   [x] `server/db/schema.ts` - Add `translations`, `practices`, `challenges`, `votes` tables.
+*   [x] Add `totalXp` column to `users` table.
 
 ### Routes
-*   [ ] `server/routes/translation.ts` - Update POST, Add GET history.
-*   [ ] `server/routes/share.ts` - Create new file for public sharing.
-*   [ ] `server/routes/user.ts` - Add settings updates.
-*   [ ] `server/routes/audio.ts` - Create new file for STT.
-*   [ ] `server/routes/practice.ts` - Create new file for Practice Mode.
-*   [ ] `server/routes/leaderboard.ts` - Create new file for Leaderboard.
-*   [ ] `server/routes/examples.ts` - Create new file for Examples Library.
+*   [x] `server/routes/translation.ts` - Update POST, Add GET history, visibility toggle, delete.
+*   [x] `server/routes/share.ts` - Public sharing and feed endpoints.
+*   [x] `server/routes/user.ts` - Settings updates with API key encryption.
+*   [ ] `server/routes/audio.ts` - STT implementation (Deferred).
+*   [x] `server/routes/practice.ts` - Practice Mode endpoints.
+*   [x] `server/routes/leaderboard.ts` - Leaderboard endpoint.
+*   [x] `server/routes/vote.ts` - Voting system for examples.
 
 ### Config
-*   [ ] `lib/encryption.ts` - Helper to encrypt/decrypt API keys.
+*   [x] `lib/encryption.ts` - Helper to encrypt/decrypt API keys.
 
 ---
 
-## 4. Implementation Steps Order
+## 4. Implementation Status
 
-1.  **Schema Update**: Define and push DB schema changes.
-2.  **History API**: specific `GET` endpoint to populate the History page (replace dummy data).
-3.  **Share API**: Backend for public share links (saving `shareId` on creation).
-4.  **Settings API**: Persisting user preferences.
-5.  **Audio API**: Hooking up the microphone recording to actual STT service.
+### ✅ Completed
+1.  **Schema Update**: All tables created and migrated.
+2.  **Translation API**: Full CRUD with public sharing.
+3.  **Practice API**: Challenges, submission, AI grading, history.
+4.  **Leaderboard API**: Public rankings with period filtering.
+5.  **Examples/Feed API**: Public feed for landing page.
+6.  **Vote API**: Upvote/downvote system.
+7.  **Settings API**: User preferences with encrypted API keys.
+
+### ⏳ Pending
+1.  **Audio API**: STT implementation (requires Cloudflare R2 setup).
+2.  **Rate Limiting**: In-memory rate limiting for API endpoints.
+3.  **Comments System**: Comments on examples (if needed).
+

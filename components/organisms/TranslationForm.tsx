@@ -54,9 +54,7 @@ const translationSchema = z.object({
 	] as const),
 	model: z.enum([
 		"gemini-2.0-flash",
-		"gemini-2.5-pro",
 		"gemini-2.5-flash",
-		"gemini-3-pro-preview",
 		"gemini-3-flash-preview",
 	] as const),
 });
@@ -211,14 +209,8 @@ export function TranslationForm() {
 														<SelectItem value="gemini-2.0-flash">
 															Gemini 2.0 Flash (Fast, Default)
 														</SelectItem>
-														<SelectItem value="gemini-2.5-pro">
-															Gemini 2.5 Pro (Powerful)
-														</SelectItem>
 														<SelectItem value="gemini-2.5-flash">
 															Gemini 2.5 Flash (Balanced)
-														</SelectItem>
-														<SelectItem value="gemini-3-pro-preview">
-															Gemini 3 Pro Preview (Latest, Most Powerful)
 														</SelectItem>
 														<SelectItem value="gemini-3-flash-preview">
 															Gemini 3 Flash Preview (Latest, Fast)

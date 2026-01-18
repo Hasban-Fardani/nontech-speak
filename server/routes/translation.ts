@@ -3,284 +3,297 @@ import { Elysia, t } from "elysia";
 import { auth } from "../auth";
 import { db } from "../db";
 import { translations } from "../db/schema";
+import { checkRateLimit, getRateLimitIdentifier, rateLimiters } from "../lib/ratelimit";
 import { translateTechnicalText } from "../services/ai.service";
 
 export const translationRoutes = new Elysia({ prefix: "/api/translation" })
-	.post(
-		"/create",
-		async ({ body, request, set }) => {
-			// Validate session
-			const session = await auth.api.getSession({ headers: request.headers });
-			if (!session) {
-				set.status = 401;
-				return { error: "Unauthorized" };
-			}
+  .post(
+    "/create",
+    async ({ body, request, set }) => {
+      // Validate session
+      const session = await auth.api.getSession({ headers: request.headers });
+      if (!session) {
+        set.status = 401;
+        return { error: "Unauthorized" };
+      }
 
-			const { technicalText, audienceType, model, isPublic, audioFileId } =
-				body;
+      // Check rate limit
+      const identifier = getRateLimitIdentifier(request, session.user.id);
+      const rateLimit = await checkRateLimit(rateLimiters.translation, identifier);
 
-			try {
-				// Call AI service with selected model
-				const stream = await translateTechnicalText(
-					technicalText,
-					audienceType,
-					model || "gemini-2.0-flash",
-					session.user.id,
-				);
+      if (!rateLimit.success) {
+        set.status = 429;
+        set.headers["X-RateLimit-Limit"] = rateLimit.limit?.toString() || "";
+        set.headers["X-RateLimit-Remaining"] = rateLimit.remaining?.toString() || "";
+        set.headers["X-RateLimit-Reset"] = rateLimit.reset?.toString() || "";
+        return { error: "Too many requests. Please try again later." };
+      }
 
-				// Consume stream to get full text
-				let simplifiedText = "";
+      const { technicalText, audienceType, model, isPublic, audioFileId } =
+        body;
 
-				for await (const chunk of stream) {
-					// Check for error chunk
-					if (
-						chunk &&
-						typeof chunk === "object" &&
-						"type" in chunk &&
-						chunk.type === "error"
-					) {
-						const errorMessage = chunk.error?.message || "Unknown stream error";
-						throw new Error(`AI Stream Error: ${errorMessage}`);
-					}
+      try {
+        // Call AI service with selected model
+        const stream = await translateTechnicalText(
+          technicalText,
+          audienceType,
+          model || "gemini-2.0-flash",
+          session.user.id,
+        );
 
-					if (typeof chunk === "string") {
-						simplifiedText += chunk;
-					} else if (chunk && typeof chunk === "object" && "content" in chunk) {
-						simplifiedText += chunk.content;
-					}
-				}
+        // Consume stream to get full text
+        let simplifiedText = "";
 
-				if (!simplifiedText) {
-					throw new Error(
-						"Translation failed: No content generated (likely API quota limit)",
-					);
-				}
+        for await (const chunk of stream) {
+          // Check for error chunk
+          if (
+            chunk &&
+            typeof chunk === "object" &&
+            "type" in chunk &&
+            chunk.type === "error"
+          ) {
+            const errorMessage = chunk.error?.message || "Unknown stream error";
+            throw new Error(`AI Stream Error: ${errorMessage}`);
+          }
 
-				// Save to database
-				const [newTranslation] = await db
-					.insert(translations)
-					.values({
-						userId: session.user.id,
-						technicalText,
-						simplifiedText,
-						audienceType,
-						inputMethod: audioFileId ? "voice" : "text",
-						audioFileId: audioFileId || null,
-						isPublic: isPublic ?? false,
-						aiModel: model || "gemini-2.0-flash",
-					})
-					.returning();
+          if (typeof chunk === "string") {
+            simplifiedText += chunk;
+          } else if (chunk && typeof chunk === "object" && "content" in chunk) {
+            simplifiedText += chunk.content;
+          }
+        }
 
-				return {
-					success: true,
-					data: newTranslation,
-				};
-			} catch (error) {
-				console.error("Translation error:", error);
+        if (!simplifiedText) {
+          throw new Error(
+            "Translation failed: No content generated (likely API quota limit)",
+          );
+        }
 
-				// Check if it's an API quota error
-				const errorMessage =
-					error instanceof Error ? error.message : "Unknown error";
+        // Save to database
+        const [newTranslation] = await db
+          .insert(translations)
+          .values({
+            userId: session.user.id,
+            technicalText,
+            simplifiedText,
+            audienceType,
+            inputMethod: audioFileId ? "voice" : "text",
+            audioFileId: audioFileId || null,
+            isPublic: isPublic ?? false,
+            aiModel: model || "gemini-2.0-flash",
+          })
+          .returning();
 
-				if (
-					errorMessage.includes("quota") ||
-					errorMessage.includes("RESOURCE_EXHAUSTED")
-				) {
-					set.status = 429;
-					return {
-						error:
-							"API quota exceeded. Please try again later or upgrade your plan.",
-					};
-				}
+        return {
+          success: true,
+          data: newTranslation,
+        };
+      } catch (error) {
+        console.error("Translation error:", error);
 
-				if (errorMessage.includes("AI Stream Error")) {
-					// Extract the actual error message
-					const match = errorMessage.match(/AI Stream Error: (.+)/);
-					const actualError = match ? match[1] : errorMessage;
-					set.status = 500;
-					return { error: actualError };
-				}
+        // Check if it's an API quota error
+        const errorMessage =
+          error instanceof Error ? error.message : "Unknown error";
 
-				set.status = 500;
-				return { error: "Translation failed. Please try again." };
-			}
-		},
-		{
-			body: t.Object({
-				technicalText: t.String({ minLength: 1, maxLength: 5000 }),
-				audienceType: t.Union([
-					t.Literal("parent"),
-					t.Literal("partner"),
-					t.Literal("friend"),
-					t.Literal("child"),
-					t.Literal("boss"),
-				]),
-				model: t.Optional(t.String()),
-				isPublic: t.Optional(t.Boolean()),
-				audioFileId: t.Optional(t.String()),
-			}),
-		},
-	)
+        if (
+          errorMessage.includes("quota") ||
+          errorMessage.includes("RESOURCE_EXHAUSTED")
+        ) {
+          set.status = 429;
+          return {
+            error:
+              "API quota exceeded. Please try again later or upgrade your plan.",
+          };
+        }
 
-	/**
-	 * PATCH /api/translation/:id/visibility
-	 * Toggle translation public/private status
-	 */
-	.patch(
-		"/:id/visibility",
-		async ({ params, body, request, set }) => {
-			const session = await auth.api.getSession({ headers: request.headers });
-			if (!session) {
-				set.status = 401;
-				return { error: "Unauthorized" };
-			}
+        if (errorMessage.includes("AI Stream Error")) {
+          // Extract the actual error message
+          const match = errorMessage.match(/AI Stream Error: (.+)/);
+          const actualError = match ? match[1] : errorMessage;
+          set.status = 500;
+          return { error: actualError };
+        }
 
-			const { id } = params;
-			const { isPublic } = body;
+        set.status = 500;
+        return { error: "Translation failed. Please try again." };
+      }
+    },
+    {
+      body: t.Object({
+        technicalText: t.String({ minLength: 1, maxLength: 5000 }),
+        audienceType: t.Union([
+          t.Literal("parent"),
+          t.Literal("partner"),
+          t.Literal("friend"),
+          t.Literal("child"),
+          t.Literal("boss"),
+        ]),
+        model: t.Optional(t.String()),
+        isPublic: t.Optional(t.Boolean()),
+        audioFileId: t.Optional(t.String()),
+      }),
+    },
+  )
 
-			try {
-				// Verify ownership
-				const [translation] = await db
-					.select()
-					.from(translations)
-					.where(eq(translations.id, id))
-					.limit(1);
+  /**
+   * PATCH /api/translation/:id/visibility
+   * Toggle translation public/private status
+   */
+  .patch(
+    "/:id/visibility",
+    async ({ params, body, request, set }) => {
+      const session = await auth.api.getSession({ headers: request.headers });
+      if (!session) {
+        set.status = 401;
+        return { error: "Unauthorized" };
+      }
 
-				if (!translation) {
-					set.status = 404;
-					return { error: "Translation not found" };
-				}
+      const { id } = params;
+      const { isPublic } = body;
 
-				if (translation.userId !== session.user.id) {
-					set.status = 403;
-					return { error: "Forbidden: You don't own this translation" };
-				}
+      try {
+        // Verify ownership
+        const [translation] = await db
+          .select()
+          .from(translations)
+          .where(eq(translations.id, id))
+          .limit(1);
 
-				// Update visibility
-				const [updated] = await db
-					.update(translations)
-					.set({ isPublic, updatedAt: new Date() })
-					.where(eq(translations.id, id))
-					.returning();
+        if (!translation) {
+          set.status = 404;
+          return { error: "Translation not found" };
+        }
 
-				return {
-					success: true,
-					data: updated,
-				};
-			} catch (error) {
-				console.error("Update visibility error:", error);
-				set.status = 500;
-				return { error: "Failed to update visibility" };
-			}
-		},
-		{
-			body: t.Object({
-				isPublic: t.Boolean(),
-			}),
-		},
-	)
+        if (translation.userId !== session.user.id) {
+          set.status = 403;
+          return { error: "Forbidden: You don't own this translation" };
+        }
 
-	/**
-	 * GET /api/translation/:id
-	 * Get single translation by ID
-	 */
-	.get("/:id", async ({ params, request, set }) => {
-		const session = await auth.api.getSession({ headers: request.headers });
-		if (!session) {
-			set.status = 401;
-			return { error: "Unauthorized" };
-		}
+        // Update visibility
+        const [updated] = await db
+          .update(translations)
+          .set({ isPublic, updatedAt: new Date() })
+          .where(eq(translations.id, id))
+          .returning();
 
-		const { id } = params;
+        return {
+          success: true,
+          data: updated,
+        };
+      } catch (error) {
+        console.error("Update visibility error:", error);
+        set.status = 500;
+        return { error: "Failed to update visibility" };
+      }
+    },
+    {
+      body: t.Object({
+        isPublic: t.Boolean(),
+      }),
+    },
+  )
 
-		try {
-			const [translation] = await db
-				.select()
-				.from(translations)
-				.where(eq(translations.id, id))
-				.limit(1);
+  /**
+   * GET /api/translation/:id
+   * Get single translation by ID
+   */
+  .get("/:id", async ({ params, request, set }) => {
+    const session = await auth.api.getSession({ headers: request.headers });
+    if (!session) {
+      set.status = 401;
+      return { error: "Unauthorized" };
+    }
 
-			if (!translation) {
-				set.status = 404;
-				return { error: "Translation not found" };
-			}
+    const { id } = params;
 
-			// Verify ownership
-			if (translation.userId !== session.user.id) {
-				set.status = 403;
-				return { error: "Forbidden: You don't own this translation" };
-			}
+    try {
+      const [translation] = await db
+        .select()
+        .from(translations)
+        .where(eq(translations.id, id))
+        .limit(1);
 
-			return translation;
-		} catch (error) {
-			console.error("Get translation error:", error);
-			set.status = 500;
-			return { error: "Failed to fetch translation" };
-		}
-	})
+      if (!translation) {
+        set.status = 404;
+        return { error: "Translation not found" };
+      }
 
-	/**
-	 * DELETE /api/translation/:id
-	 * Delete translation
-	 */
-	.delete("/:id", async ({ params, request, set }) => {
-		const session = await auth.api.getSession({ headers: request.headers });
-		if (!session) {
-			set.status = 401;
-			return { error: "Unauthorized" };
-		}
+      // Verify ownership
+      if (translation.userId !== session.user.id) {
+        set.status = 403;
+        return { error: "Forbidden: You don't own this translation" };
+      }
 
-		const { id } = params;
+      return translation;
+    } catch (error) {
+      console.error("Get translation error:", error);
+      set.status = 500;
+      return { error: "Failed to fetch translation" };
+    }
+  })
 
-		try {
-			// Verify ownership
-			const [translation] = await db
-				.select()
-				.from(translations)
-				.where(eq(translations.id, id))
-				.limit(1);
+  /**
+   * DELETE /api/translation/:id
+   * Delete translation
+   */
+  .delete("/:id", async ({ params, request, set }) => {
+    const session = await auth.api.getSession({ headers: request.headers });
+    if (!session) {
+      set.status = 401;
+      return { error: "Unauthorized" };
+    }
 
-			if (!translation) {
-				set.status = 404;
-				return { error: "Translation not found" };
-			}
+    const { id } = params;
 
-			if (translation.userId !== session.user.id) {
-				set.status = 403;
-				return { error: "Forbidden: You don't own this translation" };
-			}
+    try {
+      // Verify ownership
+      const [translation] = await db
+        .select()
+        .from(translations)
+        .where(eq(translations.id, id))
+        .limit(1);
 
-			// Delete translation (cascade will handle related records)
-			await db.delete(translations).where(eq(translations.id, id));
+      if (!translation) {
+        set.status = 404;
+        return { error: "Translation not found" };
+      }
 
-			return {
-				success: true,
-				message: "Translation deleted successfully",
-			};
-		} catch (error) {
-			console.error("Delete translation error:", error);
-			set.status = 500;
-			return { error: "Failed to delete translation" };
-		}
-	})
+      if (translation.userId !== session.user.id) {
+        set.status = 403;
+        return { error: "Forbidden: You don't own this translation" };
+      }
 
-	.get("/list", async ({ query, request, set }) => {
-		const session = await auth.api.getSession({ headers: request.headers });
-		if (!session) {
-			set.status = 401;
-			return { error: "Unauthorized" };
-		}
+      // Delete translation (cascade will handle related records)
+      await db.delete(translations).where(eq(translations.id, id));
 
-		const page = Number(query.page) || 1;
-		const limit = Number(query.limit) || 10;
+      return {
+        success: true,
+        message: "Translation deleted successfully",
+      };
+    } catch (error) {
+      console.error("Delete translation error:", error);
+      set.status = 500;
+      return { error: "Failed to delete translation" };
+    }
+  })
 
-		const userTranslations = await db
-			.select()
-			.from(translations)
-			.where(eq(translations.userId, session.user.id))
-			.orderBy(desc(translations.createdAt))
-			.limit(limit)
-			.offset((page - 1) * limit);
+  .get("/list", async ({ query, request, set }) => {
+    const session = await auth.api.getSession({ headers: request.headers });
+    if (!session) {
+      set.status = 401;
+      return { error: "Unauthorized" };
+    }
 
-		return userTranslations;
-	});
+    const page = Number(query.page) || 1;
+    const limit = Number(query.limit) || 10;
+
+    const userTranslations = await db
+      .select()
+      .from(translations)
+      .where(eq(translations.userId, session.user.id))
+      .orderBy(desc(translations.createdAt))
+      .limit(limit)
+      .offset((page - 1) * limit);
+
+    return userTranslations;
+  });
