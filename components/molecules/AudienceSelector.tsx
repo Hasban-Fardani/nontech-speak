@@ -1,4 +1,4 @@
-import { Baby, Heart, Star, Users } from "lucide-react";
+import { Baby, Heart, type LucideIcon, Star, Users } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { cn } from "@/lib/utils";
@@ -13,7 +13,7 @@ interface AudienceSelectorProps {
 const audiences: {
 	id: AudienceType;
 	label: string;
-	icon: any;
+	icon: LucideIcon;
 	description: string;
 }[] = [
 	{

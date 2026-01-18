@@ -26,7 +26,7 @@ export default function SignOutButton() {
 					},
 				},
 			});
-		} catch (error) {
+		} catch (_error) {
 			toast.error("An error occurred", {
 				description: "Please try again.",
 			});

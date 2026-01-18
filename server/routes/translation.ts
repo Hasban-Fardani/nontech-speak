@@ -3,10 +3,7 @@ import { Elysia, t } from "elysia";
 import { auth } from "../auth";
 import { db } from "../db";
 import { translations } from "../db/schema";
-import {
-	type AudienceType,
-	translateTechnicalText,
-} from "../services/ai.service";
+import { translateTechnicalText } from "../services/ai.service";
 
 export const translationRoutes = new Elysia({ prefix: "/api/translation" })
 	.post(

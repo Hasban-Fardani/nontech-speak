@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Github, Loader2, Mail, User } from "lucide-react";
+import Image from "next/image";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -19,7 +20,6 @@ import {
 import {
 	Form,
 	FormControl,
-	FormDescription,
 	FormField,
 	FormItem,
 	FormLabel,
@@ -56,7 +56,7 @@ export function AccountSettings() {
 		},
 	});
 
-	function onSubmit(data: PasswordValues) {
+	function onSubmit(_data: PasswordValues) {
 		setLoading(true);
 		// Simulate API call
 		setTimeout(() => {
@@ -80,10 +80,12 @@ export function AccountSettings() {
 					<div className="flex items-center gap-4">
 						<div className="h-16 w-16 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center overflow-hidden">
 							{session?.user?.image ? (
-								<img
+								<Image
 									src={session.user.image}
 									alt="Profile"
-									className="h-full w-full object-cover"
+									fill
+									className="object-cover"
+									sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
 								/>
 							) : (
 								<User className="h-8 w-8 text-muted-foreground" />
@@ -126,7 +128,7 @@ export function AccountSettings() {
 								<p className="text-xs text-muted-foreground">
 									{/* Logic to determine if connected - mocking based on session user image typically from github or provider info */}
 									{session?.user?.image?.includes("github")
-										? "Connected as " + session.user.name
+										? `Connected as ${session.user.name}`
 										: "Connect your GitHub account"}
 								</p>
 							</div>

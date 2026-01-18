@@ -56,8 +56,10 @@ function VerifyEmailContent() {
 						fill="none"
 						stroke="currentColor"
 						viewBox="0 0 24 24"
+						role="img"
 						aria-label="Success"
 					>
+						<title>Success</title>
 						<path
 							strokeLinecap="round"
 							strokeLinejoin="round"
@@ -92,7 +94,9 @@ function VerifyEmailContent() {
 					stroke="currentColor"
 					viewBox="0 0 24 24"
 					aria-label="Error"
+					role="img"
 				>
+					<title>Error</title>
 					<path
 						strokeLinecap="round"
 						strokeLinejoin="round"

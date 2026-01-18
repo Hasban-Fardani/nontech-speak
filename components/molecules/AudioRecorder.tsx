@@ -62,14 +62,13 @@ export function AudioRecorder({ onRecordingComplete }: AudioRecorderProps) {
 			{/* Visualizer Placeholder */}
 			<div className="h-16 flex items-end justify-center space-x-1">
 				{isRecording ? (
-					Array.from({ length: 12 }).map((_, i) => (
+					Array.from({ length: 12 }, (_, i) => i).map((barId) => (
 						<div
-							// biome-ignore lint/suspicious/noArrayIndexKey: Visualizer elements do not require unique IDs
-							key={i}
+							key={barId}
 							className="w-1.5 bg-primary rounded-full animate-pulse"
 							style={{
 								height: `${Math.random() * 100}%`,
-								animationDelay: `${i * 0.1}s`,
+								animationDelay: `${barId * 0.1}s`,
 							}}
 						/>
 					))

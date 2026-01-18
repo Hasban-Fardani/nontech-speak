@@ -29,14 +29,14 @@ export function AudioUploader({ onFileSelect }: AudioUploaderProps) {
 		e.stopPropagation();
 		setDragActive(false);
 
-		if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+		if (e.dataTransfer.files?.[0]) {
 			handleFiles(e.dataTransfer.files[0]);
 		}
 	};
 
 	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		e.preventDefault();
-		if (e.target.files && e.target.files[0]) {
+		if (e.target.files?.[0]) {
 			handleFiles(e.target.files[0]);
 		}
 	};
@@ -64,24 +64,20 @@ export function AudioUploader({ onFileSelect }: AudioUploaderProps) {
 	};
 
 	return (
-		<div
+		<fieldset
 			className={`relative w-full border-2 border-dashed rounded-xl p-8 transition-colors text-center ${
 				dragActive
 					? "border-primary bg-primary/5"
 					: "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
 			}`}
+			onDragEnter={handleDrag}
 			onDragLeave={handleDrag}
 			onDragOver={handleDrag}
 			onDrop={handleDrop}
-			role="button"
-			tabIndex={0}
-			onKeyDown={(e) => {
-				if (e.key === "Enter" || e.key === " ") {
-					triggerInput();
-				}
-			}}
+			aria-label="File Upload Dropzone"
 		>
 			<input
+				id="audio-upload"
 				ref={inputRef}
 				type="file"
 				className="hidden"
@@ -123,9 +119,13 @@ export function AudioUploader({ onFileSelect }: AudioUploaderProps) {
 						</div>
 					</div>
 					<div>
-						<p className="text-base font-medium">
-							Click to upload or drag & drop
-						</p>
+						<label
+							htmlFor="audio-upload"
+							className="text-base font-medium cursor-pointer hover:underline"
+						>
+							Click to upload
+						</label>
+						<span className="text-base font-medium"> or drag & drop</span>
 						<p className="text-sm text-muted-foreground mt-1">
 							Supports MP3, WAV, M4A (max 10MB)
 						</p>
@@ -135,6 +135,6 @@ export function AudioUploader({ onFileSelect }: AudioUploaderProps) {
 					</Button>
 				</div>
 			)}
-		</div>
+		</fieldset>
 	);
 }

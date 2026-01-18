@@ -6,10 +6,8 @@ import { Button } from "@/components/ui/button";
 import {
 	Card,
 	CardContent,
-	CardDescription,
 	CardFooter,
 	CardHeader,
-	CardTitle,
 } from "@/components/ui/card";
 
 // In a real app, this would be async because of the DB call
@@ -20,7 +18,7 @@ export const metadata: Metadata = {
 };
 
 // Mock data generator for the demo
-function getMockData(id: string) {
+function getMockData(_id: string) {
 	return {
 		originalText:
 			"The Kubernetes control plane manages the worker nodes and the Pods in the cluster. In production, the control plane usually runs across multiple computers and a cluster usually runs multiple nodes, providing fault-tolerance and high availability.",

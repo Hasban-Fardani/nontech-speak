@@ -1,4 +1,4 @@
-import { ArrowRight, Bot, Brain, Lock, Sparkles, Users } from "lucide-react";
+import { ArrowRight, Bot, Brain, Sparkles, Users } from "lucide-react";
 import Link from "next/link";
 import { PublicFeed } from "@/components/organisms/PublicFeed";
 import { Badge } from "@/components/ui/badge";

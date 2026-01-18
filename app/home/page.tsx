@@ -1,10 +1,7 @@
-import { LogOut } from "lucide-react";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import SignOutButton from "@/components/molecules/SignOutButton";
 import { TranslationForm } from "@/components/organisms/TranslationForm";
-import { Button } from "@/components/ui/button";
-import { authClient } from "@/lib/auth-client";
 import { auth } from "@/server/auth";
 
 export default async function HomePage() {

@@ -6,10 +6,7 @@ import * as React from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
-import {
-	AudienceSelector,
-	AudienceType,
-} from "@/components/molecules/AudienceSelector";
+import { AudienceSelector } from "@/components/molecules/AudienceSelector";
 import { AudioRecorder } from "@/components/molecules/AudioRecorder";
 import { AudioUploader } from "@/components/molecules/AudioUploader";
 import { ShareButton } from "@/components/molecules/ShareButton";
@@ -100,7 +97,7 @@ export function TranslationForm() {
 					errorValue !== null &&
 					"message" in errorValue
 				) {
-					errorMessage = (errorValue as any).message;
+					errorMessage = (errorValue as { message: string }).message;
 				} else {
 					errorMessage = JSON.stringify(errorValue);
 				}

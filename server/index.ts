@@ -1,5 +1,5 @@
 import { cors } from "@elysiajs/cors";
-import { Elysia } from "elysia";
+import { type Context, Elysia } from "elysia";
 import { auth } from "./auth";
 import { translationRoutes } from "./routes/translation";
 
@@ -10,8 +10,7 @@ const betterAuth = new Elysia({ name: "better-auth" })
 		auth(enabled: boolean) {
 			if (!enabled) return;
 
-			// biome-ignore lint/suspicious/noExplicitAny: Temporary fix for build
-			return onBeforeHandle(async ({ request, set }: any) => {
+			return onBeforeHandle(async ({ request, set }: Context) => {
 				const session = await auth.api.getSession({
 					headers: request.headers,
 				});
@@ -44,10 +43,24 @@ const app = new Elysia()
 		status: "ok",
 		timestamp: new Date().toISOString(),
 	}))
-	// biome-ignore lint/suspicious/noExplicitAny: Temporary fix for build
-	.get("/api/user", ({ user }: any) => user, {
-		auth: true,
-	});
+	.get(
+		"/api/user",
+		(c) => {
+			return (
+				c as unknown as {
+					user: {
+						id: string;
+						email: string;
+						name: string;
+						image?: string | null;
+					};
+				}
+			).user;
+		},
+		{
+			auth: true,
+		},
+	);
 
 export type App = typeof app;
 export default app;

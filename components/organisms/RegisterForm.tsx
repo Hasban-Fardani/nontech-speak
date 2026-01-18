@@ -78,7 +78,7 @@ export function RegisterForm() {
 					},
 				},
 			);
-		} catch (error) {
+		} catch (_error) {
 			toast.error("Something went wrong");
 			setLoading(false);
 		}

@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2, Square, Volume2 } from "lucide-react";
+import { Square, Volume2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";

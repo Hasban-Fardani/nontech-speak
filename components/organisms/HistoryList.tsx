@@ -2,14 +2,12 @@
 
 import { format } from "date-fns";
 import { ArrowRight, Calendar, Eye, Lock, Sparkles } from "lucide-react";
-import * as React from "react";
 import { ShareButton } from "@/components/molecules/ShareButton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
 	CardContent,
-	CardDescription,
 	CardFooter,
 	CardHeader,
 	CardTitle,
