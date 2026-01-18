@@ -1,23 +1,28 @@
-import { chat } from '@tanstack/ai';
-import { createGeminiChat } from '@tanstack/ai-gemini';
+import { chat } from "@tanstack/ai";
+import { createGeminiChat } from "@tanstack/ai-gemini";
 
-export type AudienceType = 'parent' | 'partner' | 'friend' | 'child';
+export type AudienceType = "parent" | "partner" | "friend" | "child";
 
 const audiencePrompts: Record<AudienceType, string> = {
-  parent: 'You are explaining to a parent who has no technical background. Use simple, everyday analogies and avoid jargon completely.',
-  partner: 'You are explaining to a romantic partner who is curious but not technical. Use relatable examples and keep it conversational.',
-  friend: 'You are explaining to a friend who is interested but not in tech. Use casual language and fun analogies.',
-  child: 'You are explaining to a 10-year-old child. Use very simple words, fun examples, and make it easy to understand.',
+	parent:
+		"You are explaining to a parent who has no technical background. Use simple, everyday analogies and avoid jargon completely.",
+	partner:
+		"You are explaining to a romantic partner who is curious but not technical. Use relatable examples and keep it conversational.",
+	friend:
+		"You are explaining to a friend who is interested but not in tech. Use casual language and fun analogies.",
+	child:
+		"You are explaining to a 10-year-old child. Use very simple words, fun examples, and make it easy to understand.",
 };
 
 // Utility to get API Key
-const getApiKey = () => process.env.GOOGLE_AI_API_KEY || process.env.GEMINI_API_KEY || '';
+const getApiKey = () =>
+	process.env.GOOGLE_AI_API_KEY || process.env.GEMINI_API_KEY || "";
 
 export async function translateTechnicalText(
-  technicalText: string,
-  audienceType: AudienceType
+	technicalText: string,
+	audienceType: AudienceType,
 ) {
-  const systemPrompt = `${audiencePrompts[audienceType]}
+	const systemPrompt = `${audiencePrompts[audienceType]}
 
 Your task is to take technical concepts and explain them in a way that is:
 1. Easy to understand for the target audience
@@ -27,24 +32,24 @@ Your task is to take technical concepts and explain them in a way that is:
 
 Keep the explanation concise (2-3 paragraphs maximum).`;
 
-  const stream = chat({
-    adapter: createGeminiChat('gemini-2.0-flash', getApiKey()),
-    messages: [
-      {
-        role: 'user',
-        content: `${systemPrompt}\n\nExplain this technical concept: ${technicalText}`
-      },
-    ],
-  });
+	const stream = chat({
+		adapter: createGeminiChat("gemini-2.0-flash", getApiKey()),
+		messages: [
+			{
+				role: "user",
+				content: `${systemPrompt}\n\nExplain this technical concept: ${technicalText}`,
+			},
+		],
+	});
 
-  return stream;
+	return stream;
 }
 
 export async function evaluatePractice(
-  userExplanation: string,
-  challengePrompt?: string
+	userExplanation: string,
+	challengePrompt?: string,
 ) {
-  const systemPrompt = `You are an expert at evaluating how well someone explains technical concepts to non-technical audiences.
+	const systemPrompt = `You are an expert at evaluating how well someone explains technical concepts to non-technical audiences.
 
 Evaluate the explanation based on:
 1. Clarity (0-25 points): Is it easy to understand?
@@ -64,19 +69,19 @@ Format your response as JSON:
   "suggestions": ["<string>", "<string>", "<string>"]
 }`;
 
-  const prompt = challengePrompt
-    ? `Challenge: ${challengePrompt}\n\nUser's explanation: ${userExplanation}`
-    : `Evaluate this explanation: ${userExplanation}`;
+	const prompt = challengePrompt
+		? `Challenge: ${challengePrompt}\n\nUser's explanation: ${userExplanation}`
+		: `Evaluate this explanation: ${userExplanation}`;
 
-  const stream = chat({
-    adapter: createGeminiChat('gemini-2.0-flash', getApiKey()),
-    messages: [
-      {
-        role: 'user',
-        content: `${systemPrompt}\n\n${prompt}`
-      },
-    ],
-  });
+	const stream = chat({
+		adapter: createGeminiChat("gemini-2.0-flash", getApiKey()),
+		messages: [
+			{
+				role: "user",
+				content: `${systemPrompt}\n\n${prompt}`,
+			},
+		],
+	});
 
-  return stream;
+	return stream;
 }

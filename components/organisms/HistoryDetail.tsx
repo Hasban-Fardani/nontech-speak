@@ -1,0 +1,292 @@
+"use client";
+
+import { format } from "date-fns";
+import {
+	ArrowLeft,
+	Bot,
+	Briefcase,
+	Calendar,
+	Check,
+	Clock,
+	Coffee,
+	Copy,
+	Laugh,
+	MoreVertical,
+	Quote,
+	RefreshCw,
+	Share2,
+	Sparkles,
+	User,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
+import * as React from "react";
+import { toast } from "sonner";
+import { DUMMY_HISTORY } from "@/components/organisms/HistoryList";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardFooter,
+	CardHeader,
+	CardTitle,
+} from "@/components/ui/card";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Separator } from "@/components/ui/separator";
+
+interface HistoryDetailProps {
+	id: string;
+}
+
+export function HistoryDetail({ id }: HistoryDetailProps) {
+	const router = useRouter();
+	const [copiedOriginal, setCopiedOriginal] = React.useState(false);
+	const [copiedTranslation, setCopiedTranslation] = React.useState(false);
+
+	// Find the item
+	const item = DUMMY_HISTORY.find((h) => h.id === id);
+
+	if (!item) {
+		return (
+			<div className="flex flex-col items-center justify-center h-[50vh] space-y-4">
+				<h2 className="text-2xl font-bold">Translation Not Found</h2>
+				<p className="text-muted-foreground">
+					The translation you are looking for does not exist or has been
+					deleted.
+				</p>
+				<Button onClick={() => router.back()}>
+					<ArrowLeft className="mr-2 h-4 w-4" />
+					Go Back
+				</Button>
+			</div>
+		);
+	}
+
+	const copyToClipboard = (text: string, isOriginal: boolean) => {
+		navigator.clipboard.writeText(text);
+		if (isOriginal) {
+			setCopiedOriginal(true);
+			setTimeout(() => setCopiedOriginal(false), 2000);
+		} else {
+			setCopiedTranslation(true);
+			setTimeout(() => setCopiedTranslation(false), 2000);
+		}
+		toast.info("Copied to clipboard");
+	};
+
+	// Mock icons based on logic (in real app, these would be saved in DB)
+	const toneIcon =
+		item.audience === "friend" ? (
+			<Laugh className="h-4 w-4" />
+		) : item.audience === "child" ? (
+			<Coffee className="h-4 w-4" />
+		) : (
+			<Briefcase className="h-4 w-4" />
+		);
+
+	const toneLabel =
+		item.audience === "friend"
+			? "Casual"
+			: item.audience === "child"
+				? "Simple"
+				: "Professional";
+
+	return (
+		<div className="space-y-6 max-w-5xl mx-auto pb-10">
+			{/* Header Navigation */}
+			<div className="flex items-center justify-between">
+				<Button
+					variant="ghost"
+					className="pl-0 hover:bg-transparent"
+					onClick={() => router.back()}
+				>
+					<ArrowLeft className="mr-2 h-4 w-4" />
+					Back to History
+				</Button>
+
+				<div className="flex gap-2">
+					<DropdownMenu>
+						<DropdownMenuTrigger asChild>
+							<Button variant="outline" size="icon">
+								<MoreVertical className="h-4 w-4" />
+							</Button>
+						</DropdownMenuTrigger>
+						<DropdownMenuContent align="end">
+							<DropdownMenuItem onClick={() => toast.success("Shared (Mock)")}>
+								<Share2 className="mr-2 h-4 w-4" />
+								Share
+							</DropdownMenuItem>
+							<DropdownMenuItem className="text-destructive">
+								Delete
+							</DropdownMenuItem>
+						</DropdownMenuContent>
+					</DropdownMenu>
+				</div>
+			</div>
+
+			<div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+				{/* Main Content (Original & Translation) */}
+				<div className="lg:col-span-2 space-y-6">
+					{/* Translation Result Card */}
+					<Card className="border-primary/20 shadow-lg bg-primary/5 dark:bg-primary/10">
+						<CardHeader>
+							<div className="flex items-center justify-between">
+								<div className="flex items-center gap-2">
+									<div className="p-2 bg-primary/10 rounded-full">
+										<Sparkles className="h-5 w-5 text-primary" />
+									</div>
+									<div>
+										<CardTitle className="text-xl">
+											Simplified Explanation
+										</CardTitle>
+										<CardDescription>
+											Translated for {item.audience}
+										</CardDescription>
+									</div>
+								</div>
+								<Button
+									variant="ghost"
+									size="sm"
+									onClick={() => copyToClipboard(item.translatedText, false)}
+								>
+									{copiedTranslation ? (
+										<Check className="h-4 w-4" />
+									) : (
+										<Copy className="h-4 w-4" />
+									)}
+								</Button>
+							</div>
+						</CardHeader>
+						<CardContent>
+							<div className="prose dark:prose-invert max-w-none">
+								<p className="text-lg leading-relaxed text-foreground font-medium">
+									{item.translatedText}
+								</p>
+							</div>
+						</CardContent>
+						<CardFooter className="bg-background/40 border-t border-primary/10 justify-between py-3">
+							<div className="flex items-center gap-2 text-xs text-muted-foreground">
+								<Bot className="h-3 w-3" />
+								<span>Generated by Gemini 1.5 Pro</span>
+							</div>
+							<Button size="sm" variant="ghost" className="text-xs h-8">
+								<RefreshCw className="mr-2 h-3 w-3" />
+								Regenerate
+							</Button>
+						</CardFooter>
+					</Card>
+
+					{/* Original Text Card */}
+					<Card>
+						<CardHeader className="pb-3">
+							<div className="flex items-center justify-between">
+								<div className="flex items-center gap-2">
+									<Quote className="h-5 w-5 text-muted-foreground" />
+									<CardTitle className="text-base text-muted-foreground">
+										Original Text
+									</CardTitle>
+								</div>
+								<Button
+									variant="ghost"
+									size="sm"
+									onClick={() => copyToClipboard(item.originalText, true)}
+								>
+									{copiedOriginal ? (
+										<Check className="h-4 w-4" />
+									) : (
+										<Copy className="h-4 w-4" />
+									)}
+								</Button>
+							</div>
+						</CardHeader>
+						<CardContent>
+							<p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
+								{item.originalText}
+							</p>
+						</CardContent>
+					</Card>
+				</div>
+
+				{/* Sidebar Metadata */}
+				<div className="space-y-6">
+					<Card>
+						<CardHeader>
+							<CardTitle className="text-lg">Details</CardTitle>
+						</CardHeader>
+						<CardContent className="space-y-4">
+							<div className="flex items-center justify-between">
+								<div className="flex items-center gap-2 text-sm text-muted-foreground">
+									<Calendar className="h-4 w-4" />
+									<span>Date</span>
+								</div>
+								<span className="font-medium text-sm">
+									{format(item.createdAt, "MMM d, yyyy")}
+								</span>
+							</div>
+							<Separator />
+
+							<div className="flex items-center justify-between">
+								<div className="flex items-center gap-2 text-sm text-muted-foreground">
+									<Clock className="h-4 w-4" />
+									<span>Time</span>
+								</div>
+								<span className="font-medium text-sm">
+									{format(item.createdAt, "h:mm a")}
+								</span>
+							</div>
+							<Separator />
+
+							<div className="flex items-center justify-between">
+								<div className="flex items-center gap-2 text-sm text-muted-foreground">
+									<User className="h-4 w-4" />
+									<span>Audience</span>
+								</div>
+								<Badge variant="secondary" className="capitalize">
+									{item.audience}
+								</Badge>
+							</div>
+							<Separator />
+
+							<div className="flex items-center justify-between">
+								<div className="flex items-center gap-2 text-sm text-muted-foreground">
+									{toneIcon}
+									<span>Tone</span>
+								</div>
+								<span className="font-medium text-sm">{toneLabel}</span>
+							</div>
+							<Separator />
+
+							<div className="flex items-center justify-between">
+								<div className="flex items-center gap-2 text-sm text-muted-foreground">
+									<Clock className="h-4 w-4" />
+									<span>Duration</span>
+								</div>
+								<span className="font-medium text-sm">1.2s</span>
+							</div>
+						</CardContent>
+					</Card>
+
+					<Card className="bg-gradient-to-br from-primary/5 to-transparent border-0 shadow-sm">
+						<CardContent className="pt-6">
+							<h4 className="font-semibold mb-2 text-sm">Model Info</h4>
+							<p className="text-xs text-muted-foreground mb-4">
+								This translation was generated using the{" "}
+								<strong>Gemini 1.5 Pro</strong> model with a temperature setting
+								of 0.7.
+							</p>
+							<Badge variant="outline" className="text-[10px] bg-background">
+								v1.0.0-beta
+							</Badge>
+						</CardContent>
+					</Card>
+				</div>
+			</div>
+		</div>
+	);
+}

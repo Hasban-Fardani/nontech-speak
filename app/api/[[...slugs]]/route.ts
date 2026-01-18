@@ -1,4 +1,4 @@
-import app from '@/server/index';
+import app from "@/server/index";
 
 export const GET = app.handle;
 export const POST = app.handle;

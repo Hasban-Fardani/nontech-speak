@@ -26,6 +26,7 @@
 - [x] Create atom components (Button, Input, Badge, etc)
 - [x] Create molecule components (FormField, Card, AudioRecorder, etc)
 - [x] Create organism components (Navbar, Sidebar, TranslationForm, etc)
+- [x] Create Settings page UI
 - [ ] Implement dark mode support
 - [ ] Setup i18n structure (English first)
 
@@ -40,7 +41,12 @@
 - [x] Save translations to database
 - [x] Implement error handling and quota management
 - [x] Add toast notifications for user feedback
-
+- [x] Add Model Selector to Translation UI
+- [x] Standardize Dashboard Layout & Spacing (UI Polish)
+- [x] Enhance Sidebar & Navbar (Branding & User Account)
+- [x] Create Account Page with Password & Linked Accounts UI
+- [x] Implement Share functionality with Public Page & TTS
+ 
 ## Phase 5: Speech-to-Text Integration
 - [ ] Setup Cloudflare R2 for file storage
 - [ ] Create audio file upload endpoint
