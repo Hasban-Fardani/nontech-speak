@@ -1,7 +1,7 @@
 "use client";
 
 import { Crown, Medal } from "lucide-react";
-import { useState } from "react";
+import * as React from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -11,49 +11,96 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-// Mock Data Types
 type LeaderboardEntry = {
 	rank: number;
 	user: {
+		id: string;
 		name: string;
-		avatar: string; // url or fallback
+		avatar: string;
 		initials: string;
 	};
 	xp: number;
-	streak: number;
 	isCurrentUser?: boolean;
 };
 
-// Mock Data Generator
-const generateData = (count: number): LeaderboardEntry[] => {
-	return Array.from({ length: count })
-		.map((_, i) => ({
-			rank: i + 1,
-			user: {
-				name: `User ${i + 1}`,
-				avatar: "",
-				initials: `U${i + 1}`,
-			},
-			xp: Math.floor(Math.random() * 5000) + 1000 - i * 100,
-			streak: Math.floor(Math.random() * 30),
-			isCurrentUser: i === 4,
-		}))
-		.sort((a, b) => b.xp - a.xp)
-		.map((entry, idx) => ({ ...entry, rank: idx + 1 }));
-};
-
-const MOCK_DATA: Record<string, LeaderboardEntry[]> = {
-	today: generateData(10),
-	week: generateData(10),
-	month: generateData(10),
-	all_time: generateData(10),
-};
-
 export default function LeaderboardPage() {
-	const [period, setPeriod] = useState("today");
-	const data = MOCK_DATA[period];
+	const [period, setPeriod] = React.useState("all_time");
+	const [data, setData] = React.useState<LeaderboardEntry[]>([]);
+	const [loading, setLoading] = React.useState(true);
+
+	React.useEffect(() => {
+		async function fetchLeaderboard() {
+			setLoading(true);
+			try {
+				const res = await fetch(`/api/leaderboard?period=${period}`);
+				if (res.ok) {
+					const leaderboard = await res.json();
+					setData(leaderboard);
+				}
+			} catch (error) {
+				console.error("Failed to fetch leaderboard:", error);
+			} finally {
+				setLoading(false);
+			}
+		}
+
+		fetchLeaderboard();
+	}, [period]);
+
+	if (loading) {
+		return (
+			<div className="space-y-8">
+				<div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+					<div>
+						<h1 className="text-3xl font-bold tracking-tight">Leaderboard</h1>
+						<p className="text-muted-foreground mt-1">
+							See who's mastering technical communication.
+						</p>
+					</div>
+				</div>
+
+				<Tabs value={period} onValueChange={setPeriod} className="w-full">
+					<TabsList className="grid w-full grid-cols-4 max-w-[600px]">
+						<TabsTrigger value="today">Today</TabsTrigger>
+						<TabsTrigger value="week">This Week</TabsTrigger>
+						<TabsTrigger value="month">This Month</TabsTrigger>
+						<TabsTrigger value="all_time">All Time</TabsTrigger>
+					</TabsList>
+				</Tabs>
+
+				<Card>
+					<CardHeader>
+						<Skeleton className="h-6 w-32 mb-2" />
+						<Skeleton className="h-4 w-48" />
+					</CardHeader>
+					<CardContent>
+						<div className="space-y-4">
+							{[...Array(5)].map((_, i) => (
+								<div
+									// biome-ignore lint/suspicious/noArrayIndexKey: Skeleton list is static
+									key={i}
+									className="flex items-center justify-between p-4 rounded-lg border"
+								>
+									<div className="flex items-center gap-4">
+										<Skeleton className="h-8 w-8 rounded-full" />
+										<Skeleton className="h-10 w-10 rounded-full" />
+										<div>
+											<Skeleton className="h-4 w-24 mb-2" />
+											<Skeleton className="h-3 w-16" />
+										</div>
+									</div>
+									<Skeleton className="h-6 w-20" />
+								</div>
+							))}
+						</div>
+					</CardContent>
+				</Card>
+			</div>
+		);
+	}
 
 	return (
 		<div className="space-y-8">
@@ -80,67 +127,70 @@ export default function LeaderboardPage() {
 			</Tabs>
 
 			<div className="grid gap-6 md:grid-cols-1 lg:grid-cols-3">
-				{/* Top 3 Podium (Visual) - Only for larger screens if desired, keeping simple list for now as per MVP */}
-
-				{/* Main List */}
 				<Card className="lg:col-span-3">
 					<CardHeader>
 						<CardTitle>Rankings</CardTitle>
 						<CardDescription>Top contributors for this period.</CardDescription>
 					</CardHeader>
 					<CardContent>
-						<div className="space-y-4">
-							{data.map((entry) => (
-								<div
-									key={entry.rank}
-									className={`flex items-center justify-between p-4 rounded-lg border ${
-										entry.isCurrentUser
-											? "bg-slate-50 border-primary/50 dark:bg-slate-900"
-											: "bg-card"
-									}`}
-								>
-									<div className="flex items-center gap-4">
-										<div
-											className={`
+						{data.length === 0 ? (
+							<div className="text-center py-12 text-muted-foreground">
+								<p>No rankings available for this period.</p>
+								<p className="text-sm mt-2">
+									Complete practice challenges to earn XP!
+								</p>
+							</div>
+						) : (
+							<div className="space-y-4">
+								{data.map((entry) => (
+									<div
+										key={entry.rank}
+										className={`flex items-center justify-between p-4 rounded-lg border ${
+											entry.isCurrentUser
+												? "bg-slate-50 border-primary/50 dark:bg-slate-900"
+												: "bg-card"
+										}`}
+									>
+										<div className="flex items-center gap-4">
+											<div
+												className={`
                                             flex items-center justify-center w-8 h-8 rounded-full font-bold text-lg
                                             ${entry.rank === 1 ? "text-yellow-500" : ""}
                                             ${entry.rank === 2 ? "text-slate-400" : ""}
                                             ${entry.rank === 3 ? "text-amber-600" : ""}
                                             ${entry.rank > 3 ? "text-muted-foreground" : ""}
                                         `}
-										>
-											{entry.rank <= 3 ? (
-												<Medal className="h-6 w-6" />
-											) : (
-												entry.rank
-											)}
-										</div>
-										<Avatar className="h-10 w-10 border">
-											<AvatarImage src={entry.user.avatar} />
-											<AvatarFallback>{entry.user.initials}</AvatarFallback>
-										</Avatar>
-										<div>
-											<p className="font-medium lead-none">
-												{entry.user.name}
-												{entry.isCurrentUser && (
-													<Badge variant="secondary" className="ml-2 text-xs">
-														You
-													</Badge>
+											>
+												{entry.rank <= 3 ? (
+													<Medal className="h-6 w-6" />
+												) : (
+													entry.rank
 												)}
-											</p>
-											<p className="text-sm text-muted-foreground flex items-center gap-1">
-												🔥 {entry.streak} day streak
-											</p>
+											</div>
+											<Avatar className="h-10 w-10 border">
+												<AvatarImage src={entry.user.avatar} />
+												<AvatarFallback>{entry.user.initials}</AvatarFallback>
+											</Avatar>
+											<div>
+												<p className="font-medium lead-none">
+													{entry.user.name}
+													{entry.isCurrentUser && (
+														<Badge variant="secondary" className="ml-2 text-xs">
+															You
+														</Badge>
+													)}
+												</p>
+											</div>
+										</div>
+										<div className="text-right">
+											<div className="font-bold text-lg">
+												{entry.xp.toLocaleString()} XP
+											</div>
 										</div>
 									</div>
-									<div className="text-right">
-										<div className="font-bold text-lg">
-											{entry.xp.toLocaleString()} XP
-										</div>
-									</div>
-								</div>
-							))}
-						</div>
+								))}
+							</div>
+						)}
 					</CardContent>
 				</Card>
 			</div>

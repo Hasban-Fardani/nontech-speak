@@ -120,7 +120,7 @@ export function HistoryDetail({ id }: HistoryDetailProps) {
 
 			toast.success("Translation deleted successfully");
 			router.push("/history");
-		} catch (error) {
+		} catch (_error) {
 			toast.error("Failed to delete translation");
 			setDeleting(false);
 		}
@@ -152,7 +152,7 @@ export function HistoryDetail({ id }: HistoryDetailProps) {
 					? "Translation is now public"
 					: "Translation is now private",
 			);
-		} catch (error) {
+		} catch (_error) {
 			toast.error("Failed to update visibility");
 		} finally {
 			setTogglingVisibility(false);
@@ -232,7 +232,11 @@ export function HistoryDetail({ id }: HistoryDetailProps) {
 					</Button>
 					<DropdownMenu>
 						<DropdownMenuTrigger asChild>
-							<Button variant="outline" size="icon" disabled={deleting || togglingVisibility}>
+							<Button
+								variant="outline"
+								size="icon"
+								disabled={deleting || togglingVisibility}
+							>
 								<MoreVertical className="h-4 w-4" />
 							</Button>
 						</DropdownMenuTrigger>

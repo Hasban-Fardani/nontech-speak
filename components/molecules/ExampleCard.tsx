@@ -25,7 +25,6 @@ interface ExampleCardProps {
 }
 
 export function ExampleCard({
-	id,
 	title,
 	description,
 	tags,

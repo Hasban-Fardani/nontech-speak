@@ -4,7 +4,6 @@ import { Library, Search } from "lucide-react";
 import * as React from "react";
 import { ExampleCard } from "@/components/molecules/ExampleCard";
 import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
 	Select,
 	SelectContent,
@@ -12,6 +11,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type Example = {
 	id: string;
@@ -81,6 +81,7 @@ export default function ExamplesPage() {
 				<Skeleton className="h-20 w-full" />
 				<div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
 					{[...Array(6)].map((_, i) => (
+						// biome-ignore lint/suspicious/noArrayIndexKey: Skeleton list is static
 						<Skeleton key={i} className="h-64" />
 					))}
 				</div>

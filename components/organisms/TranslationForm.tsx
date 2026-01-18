@@ -45,8 +45,20 @@ const translationSchema = z.object({
 		.string()
 		.min(10, "Text must be at least 10 characters")
 		.max(5000),
-	audienceType: z.enum(["parent", "partner", "friend", "child"] as const),
-	model: z.enum(["gemini-1.5-pro", "gpt-4o", "claude-3-5-sonnet"] as const),
+	audienceType: z.enum([
+		"parent",
+		"partner",
+		"friend",
+		"child",
+		"boss",
+	] as const),
+	model: z.enum([
+		"gemini-2.0-flash",
+		"gemini-2.5-pro",
+		"gemini-2.5-flash",
+		"gemini-3-pro-preview",
+		"gemini-3-flash-preview",
+	] as const),
 });
 
 type TranslationValues = z.infer<typeof translationSchema>;
@@ -65,7 +77,7 @@ export function TranslationForm() {
 		defaultValues: {
 			technicalText: "",
 			audienceType: "parent",
-			model: "gemini-1.5-pro",
+			model: "gemini-2.0-flash",
 		},
 	});
 
@@ -196,12 +208,20 @@ export function TranslationForm() {
 														</SelectTrigger>
 													</FormControl>
 													<SelectContent>
-														<SelectItem value="gemini-1.5-pro">
-															Gemini 1.5 Pro
+														<SelectItem value="gemini-2.0-flash">
+															Gemini 2.0 Flash (Fast, Default)
 														</SelectItem>
-														<SelectItem value="gpt-4o">GPT-4o</SelectItem>
-														<SelectItem value="claude-3-5-sonnet">
-															Claude 3.5 Sonnet
+														<SelectItem value="gemini-2.5-pro">
+															Gemini 2.5 Pro (Powerful)
+														</SelectItem>
+														<SelectItem value="gemini-2.5-flash">
+															Gemini 2.5 Flash (Balanced)
+														</SelectItem>
+														<SelectItem value="gemini-3-pro-preview">
+															Gemini 3 Pro Preview (Latest, Most Powerful)
+														</SelectItem>
+														<SelectItem value="gemini-3-flash-preview">
+															Gemini 3 Flash Preview (Latest, Fast)
 														</SelectItem>
 													</SelectContent>
 												</Select>

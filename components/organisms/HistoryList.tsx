@@ -54,6 +54,7 @@ export function HistoryList() {
 		return (
 			<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
 				{[...Array(6)].map((_, i) => (
+					// biome-ignore lint/suspicious/noArrayIndexKey: Skeleton list is static
 					<Card key={i}>
 						<CardHeader>
 							<Skeleton className="h-4 w-20 mb-2" />

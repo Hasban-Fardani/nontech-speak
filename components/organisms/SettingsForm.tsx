@@ -124,7 +124,7 @@ export function SettingsForm() {
 					description: result.error || "Please try again",
 				});
 			}
-		} catch (error) {
+		} catch (_error) {
 			toast.error("Error", {
 				description: "Failed to save API key. Please try again.",
 			});
@@ -278,7 +278,9 @@ export function SettingsForm() {
 								name="defaultAudience"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel className="text-base">Default Audience</FormLabel>
+										<FormLabel className="text-base">
+											Default Audience
+										</FormLabel>
 										<FormDescription className="mb-4">
 											Select who you usually translate for.
 										</FormDescription>
@@ -298,7 +300,9 @@ export function SettingsForm() {
 								name="tone"
 								render={({ field }) => (
 									<FormItem className="space-y-1">
-										<FormLabel className="text-base">Translation Tone</FormLabel>
+										<FormLabel className="text-base">
+											Translation Tone
+										</FormLabel>
 										<FormMessage />
 										<RadioGroup
 											onValueChange={field.onChange}

@@ -1,8 +1,8 @@
 "use client";
 
-import { CheckCircle2, Lock, Play, Search, Trophy } from "lucide-react";
+import { Play, Search, Trophy } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import * as React from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,68 +21,73 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 
-// Mock Data
-const CHALLENGES = [
-	{
-		id: "c1",
-		title: "Explain 'API' to a Grandparent",
-		description:
-			"Goal: Explain how software talks to software without using jargon.",
-		difficulty: "Beginner",
-		xp: 50,
-		status: "completed",
-		tags: ["System Design", "Web"],
-	},
-	{
-		id: "c2",
-		title: "Explain 'Cloud Computing'",
-		description:
-			"Goal: Describe on-demand computing resources using a real-world analogy.",
-		difficulty: "Beginner",
-		xp: 50,
-		status: "unlocked",
-		tags: ["Infrastructure", "Cloud"],
-	},
-	{
-		id: "c3",
-		title: "Explain 'Encryption'",
-		description:
-			"Goal: Illustrate how data is protected from unauthorized access.",
-		difficulty: "Intermediate",
-		xp: 100,
-		status: "locked",
-		tags: ["Security", "Cryptography"],
-	},
-	{
-		id: "c4",
-		title: "Explain 'Blockchain'",
-		description: "Goal: Define a decentralized ledger system simply.",
-		difficulty: "Expert",
-		xp: 150,
-		status: "locked",
-		tags: ["Web3", "Database"],
-	},
-];
+type Challenge = {
+	id: string;
+	title: string;
+	description: string;
+	difficulty: "beginner" | "intermediate" | "expert";
+	xpReward: number;
+	tags: string[];
+	hints: string[];
+	isActive: boolean;
+};
 
 export default function PracticeListPage() {
-	const [search, setSearch] = useState("");
-	const [difficulty, setDifficulty] = useState("all");
-	const [status, setStatus] = useState("all");
+	const [challenges, setChallenges] = React.useState<Challenge[]>([]);
+	const [loading, setLoading] = React.useState(true);
+	const [search, setSearch] = React.useState("");
+	const [difficulty, setDifficulty] = React.useState("all");
+	const [totalXp, setTotalXp] = React.useState(0);
 
-	const filteredChallenges = CHALLENGES.filter((c) => {
+	React.useEffect(() => {
+		async function fetchData() {
+			try {
+				const [challengesRes, settingsRes] = await Promise.all([
+					fetch("/api/practice/challenges"),
+					fetch("/api/user/settings"),
+				]);
+
+				if (challengesRes.ok) {
+					const data = await challengesRes.json();
+					setChallenges(data);
+				}
+
+				if (settingsRes.ok) {
+					const userData = await settingsRes.json();
+					setTotalXp(userData.totalXp || 0);
+				}
+			} catch (error) {
+				console.error("Failed to fetch:", error);
+			} finally {
+				setLoading(false);
+			}
+		}
+
+		fetchData();
+	}, []);
+
+	const filteredChallenges = challenges.filter((c) => {
 		const matchesSearch = c.title.toLowerCase().includes(search.toLowerCase());
 		const matchesDifficulty =
-			difficulty === "all" ||
-			c.difficulty.toLowerCase() === difficulty.toLowerCase();
-
-		// Status logic
-		let matchesStatus = true;
-		if (status === "completed") matchesStatus = c.status === "completed";
-		if (status === "not_started") matchesStatus = c.status !== "completed";
-
-		return matchesSearch && matchesDifficulty && matchesStatus;
+			difficulty === "all" || c.difficulty === difficulty;
+		return matchesSearch && matchesDifficulty;
 	});
+
+	if (loading) {
+		return (
+			<div className="space-y-8">
+				<Skeleton className="h-20 w-full" />
+				<div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+					{[...Array(6)].map((_, i) => (
+						// biome-ignore lint/suspicious/noArrayIndexKey: Skeleton list is static
+						<Skeleton key={i} className="h-64" />
+					))}
+				</div>
+			</div>
+		);
+	}
 
 	return (
 		<div className="space-y-8">
@@ -95,7 +100,7 @@ export default function PracticeListPage() {
 				</div>
 				<div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 px-4 py-2 rounded-full">
 					<Trophy className="h-5 w-5 text-yellow-500" />
-					<span className="font-bold">1,250 XP</span>
+					<span className="font-bold">{totalXp.toLocaleString()} XP</span>
 				</div>
 			</div>
 
@@ -110,61 +115,41 @@ export default function PracticeListPage() {
 						onChange={(e) => setSearch(e.target.value)}
 					/>
 				</div>
-				<div className="flex gap-2">
-					<Select value={difficulty} onValueChange={setDifficulty}>
-						<SelectTrigger className="w-[150px]">
-							<SelectValue placeholder="Difficulty" />
-						</SelectTrigger>
-						<SelectContent>
-							<SelectItem value="all">All Levels</SelectItem>
-							<SelectItem value="beginner">Beginner</SelectItem>
-							<SelectItem value="intermediate">Intermediate</SelectItem>
-							<SelectItem value="expert">Expert</SelectItem>
-						</SelectContent>
-					</Select>
-					<Select value={status} onValueChange={setStatus}>
-						<SelectTrigger className="w-[150px]">
-							<SelectValue placeholder="Status" />
-						</SelectTrigger>
-						<SelectContent>
-							<SelectItem value="all">All Status</SelectItem>
-							<SelectItem value="completed">Completed</SelectItem>
-							<SelectItem value="not_started">Not Started</SelectItem>
-						</SelectContent>
-					</Select>
-				</div>
+				<Select value={difficulty} onValueChange={setDifficulty}>
+					<SelectTrigger className="w-[150px]">
+						<SelectValue placeholder="Difficulty" />
+					</SelectTrigger>
+					<SelectContent>
+						<SelectItem value="all">All Levels</SelectItem>
+						<SelectItem value="beginner">Beginner</SelectItem>
+						<SelectItem value="intermediate">Intermediate</SelectItem>
+						<SelectItem value="expert">Expert</SelectItem>
+					</SelectContent>
+				</Select>
 			</div>
 
 			{/* Challenge Grid */}
 			<div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
 				{filteredChallenges.map((challenge) => (
-					<Card
-						key={challenge.id}
-						className={`flex flex-col ${challenge.status === "locked" ? "opacity-75 bg-slate-50 dark:bg-slate-900" : ""}`}
-					>
+					<Card key={challenge.id} className="flex flex-col">
 						<CardHeader>
 							<div className="flex justify-between items-start mb-2">
 								<Badge
 									variant={
-										challenge.difficulty === "Beginner"
+										challenge.difficulty === "beginner"
 											? "secondary"
-											: challenge.difficulty === "Intermediate"
+											: challenge.difficulty === "intermediate"
 												? "default"
 												: "destructive"
 									}
+									className="capitalize"
 								>
 									{challenge.difficulty}
 								</Badge>
-								{challenge.status === "completed" && (
-									<CheckCircle2 className="h-5 w-5 text-green-500" />
-								)}
-								{challenge.status === "locked" && (
-									<Lock className="h-5 w-5 text-muted-foreground" />
-								)}
 							</div>
 							<CardTitle className="line-clamp-1">{challenge.title}</CardTitle>
 							<div className="flex gap-1 mt-2 mb-2">
-								{challenge.tags.map((tag) => (
+								{challenge.tags?.map((tag) => (
 									<Badge
 										key={tag}
 										variant="outline"
@@ -180,25 +165,25 @@ export default function PracticeListPage() {
 						</CardHeader>
 						<CardContent className="flex-1">
 							<div className="text-sm font-medium text-muted-foreground">
-								Reward: {challenge.xp} XP
+								Reward: {challenge.xpReward} XP
 							</div>
 						</CardContent>
 						<CardFooter>
-							{challenge.status === "locked" ? (
-								<Button disabled className="w-full">
-									Locked
-								</Button>
-							) : (
-								<Button asChild className="w-full">
-									<Link href={`/practice/${challenge.id}`}>
-										Start Challenge <Play className="ml-2 h-4 w-4" />
-									</Link>
-								</Button>
-							)}
+							<Button asChild className="w-full">
+								<Link href={`/practice/${challenge.id}`}>
+									Start Challenge <Play className="ml-2 h-4 w-4" />
+								</Link>
+							</Button>
 						</CardFooter>
 					</Card>
 				))}
 			</div>
+
+			{filteredChallenges.length === 0 && (
+				<div className="text-center py-20 text-muted-foreground">
+					No challenges found matching your filters.
+				</div>
+			)}
 		</div>
 	);
 }

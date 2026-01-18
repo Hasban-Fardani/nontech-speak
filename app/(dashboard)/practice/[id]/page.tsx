@@ -1,9 +1,10 @@
 "use client";
 
-import { ArrowLeft, RefreshCw, Send, Star } from "lucide-react";
+import { ArrowLeft, RefreshCw, Send, Star, Trophy } from "lucide-react";
 import Link from "next/link";
-import { use, useState } from "react";
-import { AudioRecorder } from "@/components/molecules/AudioRecorder";
+import { useParams } from "next/navigation";
+import * as React from "react";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,34 +15,17 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 
-// Mock Data - In real app fetch based on ID
-const CHALLENGES = {
-	c1: {
-		id: "c1",
-		title: "Explain 'API' to a Grandparent",
-		description:
-			"Goal: Explain how software talks to software without using jargon. Use an everyday analogy.",
-		difficulty: "Beginner",
-		xp: 50,
-		tags: ["System Design", "Web"],
-		hints: [
-			"Think about a restaurant scenario.",
-			"You (the customer) don't go into the kitchen (the server).",
-			"Someone takes your order and brings the food back.",
-		],
-	},
-	// Fallback for demo
-	default: {
-		id: "xx",
-		title: "Standard Challenge",
-		description: "Goal: Explain a complex topic simply.",
-		difficulty: "Intermediate",
-		xp: 75,
-		tags: ["General"],
-		hints: ["Try to relate it to something physical.", "Avoid using acronyms."],
-	},
+type Challenge = {
+	id: string;
+	title: string;
+	description: string;
+	difficulty: string;
+	xpReward: number;
+	tags: string[];
+	hints: string[];
 };
 
 type Feedback = {
@@ -51,40 +35,92 @@ type Feedback = {
 	improvements: string[];
 };
 
-export default function PracticeDetailPage({
-	params,
-}: {
-	params: Promise<{ id: string }>;
-}) {
-	// Unwrap params
-	const { id } = use(params);
-	const challenge =
-		CHALLENGES[id as keyof typeof CHALLENGES] || CHALLENGES.default;
+export default function PracticeDetailPage() {
+	const params = useParams();
+	const id = params.id as string;
 
-	const [input, setInput] = useState("");
-	const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
-	const [isSubmitting, setIsSubmitting] = useState(false);
-	const [feedback, setFeedback] = useState<Feedback | null>(null);
+	const [challenge, setChallenge] = React.useState<Challenge | null>(null);
+	const [loading, setLoading] = React.useState(true);
+	const [input, setInput] = React.useState("");
+	const [isSubmitting, setIsSubmitting] = React.useState(false);
+	const [feedback, setFeedback] = React.useState<Feedback | null>(null);
+	const [xpEarned, setXpEarned] = React.useState(0);
 
-	const handleSubmit = () => {
+	React.useEffect(() => {
+		async function fetchChallenge() {
+			try {
+				const response = await fetch("/api/practice/challenges");
+				if (!response.ok) throw new Error("Failed to fetch");
+				const challenges = await response.json();
+				const found = challenges.find((c: Challenge) => c.id === id);
+				setChallenge(found || null);
+			} catch (error) {
+				console.error("Failed to fetch challenge:", error);
+			} finally {
+				setLoading(false);
+			}
+		}
+
+		fetchChallenge();
+	}, [id]);
+
+	const handleSubmit = async () => {
+		if (!challenge || !input.trim()) return;
+
 		setIsSubmitting(true);
-		setTimeout(() => {
-			setFeedback({
-				score: 85,
-				explanation:
-					"Great analogy! You effectively communicated the core concept.",
-				strengths: ["Clear analogy", "Friendly tone"],
-				improvements: ["Could be more concise"],
+		try {
+			const response = await fetch("/api/practice/submit", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					challengeId: challenge.id,
+					userExplanation: input,
+				}),
 			});
+
+			if (!response.ok) {
+				throw new Error("Failed to submit");
+			}
+
+			const data = await response.json();
+			setFeedback(data.feedback);
+			setXpEarned(data.xpEarned);
+			toast.success(`+${data.xpEarned} XP earned!`);
+		} catch (_error) {
+			toast.error("Failed to submit. Please try again.");
+		} finally {
 			setIsSubmitting(false);
-		}, 1500);
+		}
 	};
 
 	const handleRetry = () => {
 		setFeedback(null);
 		setInput("");
-		setAudioBlob(null);
+		setXpEarned(0);
 	};
+
+	if (loading) {
+		return (
+			<div className="space-y-8">
+				<Skeleton className="h-20 w-full" />
+				<Skeleton className="h-96 w-full" />
+			</div>
+		);
+	}
+
+	if (!challenge) {
+		return (
+			<div className="text-center py-20">
+				<h2 className="text-2xl font-bold mb-4">Challenge Not Found</h2>
+				<Button asChild>
+					<Link href="/practice">
+						<ArrowLeft className="mr-2 h-4 w-4" />
+						Back to Practice
+					</Link>
+				</Button>
+			</div>
+		);
+	}
 
 	return (
 		<div className="space-y-8">
@@ -101,12 +137,13 @@ export default function PracticeDetailPage({
 					<div className="flex items-center gap-2 mt-1">
 						<Badge
 							variant={
-								challenge.difficulty === "Beginner"
+								challenge.difficulty === "beginner"
 									? "secondary"
-									: challenge.difficulty === "Intermediate"
+									: challenge.difficulty === "intermediate"
 										? "default"
 										: "destructive"
 							}
+							className="capitalize"
 						>
 							{challenge.difficulty}
 						</Badge>
@@ -120,7 +157,7 @@ export default function PracticeDetailPage({
 							</Badge>
 						))}
 						<span className="text-sm text-muted-foreground border-l pl-2 ml-1">
-							{challenge.xp} XP
+							{challenge.xpReward} XP
 						</span>
 					</div>
 				</div>
@@ -165,22 +202,11 @@ export default function PracticeDetailPage({
 								value={input}
 								onChange={(e) => setInput(e.target.value)}
 							/>
-							<div className="relative py-2">
-								<div className="absolute inset-0 flex items-center">
-									<span className="w-full border-t" />
-								</div>
-								<div className="relative flex justify-center text-xs uppercase">
-									<span className="bg-background px-2 text-muted-foreground">
-										Or record audio
-									</span>
-								</div>
-							</div>
-							<AudioRecorder onRecordingComplete={setAudioBlob} />
 						</CardContent>
 						<CardFooter className="flex justify-end">
 							<Button
 								onClick={handleSubmit}
-								disabled={(!input && !audioBlob) || isSubmitting}
+								disabled={!input.trim() || isSubmitting}
 								size="lg"
 							>
 								{isSubmitting ? (
@@ -216,7 +242,7 @@ export default function PracticeDetailPage({
 										Strengths
 									</h4>
 									<ul className="text-sm list-disc list-inside text-muted-foreground">
-										{feedback.strengths.map((s) => (
+										{feedback.strengths?.map((s) => (
 											<li key={s}>{s}</li>
 										))}
 									</ul>
@@ -226,12 +252,20 @@ export default function PracticeDetailPage({
 										Improvements
 									</h4>
 									<ul className="text-sm list-disc list-inside text-muted-foreground">
-										{feedback.improvements.map((s) => (
+										{feedback.improvements?.map((s) => (
 											<li key={s}>{s}</li>
 										))}
 									</ul>
 								</div>
 							</div>
+							{xpEarned > 0 && (
+								<div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3 text-center">
+									<Trophy className="h-5 w-5 text-yellow-500 inline mr-2" />
+									<span className="font-bold text-yellow-700 dark:text-yellow-400">
+										+{xpEarned} XP Earned!
+									</span>
+								</div>
+							)}
 						</CardContent>
 						<CardFooter>
 							<Button
@@ -253,6 +287,7 @@ export default function PracticeDetailPage({
 						<CardContent className="text-sm text-muted-foreground space-y-2">
 							<p>• Keep it simple.</p>
 							<p>• Use relatable analogies.</p>
+							<p>• Avoid jargon.</p>
 						</CardContent>
 					</Card>
 				</div>

@@ -115,7 +115,9 @@ export default function DashboardPage() {
 							href={action.href}
 							className="bg-white dark:bg-slate-900 rounded-xl p-6 border border-slate-200 dark:border-slate-800 hover:border-blue-500 dark:hover:border-blue-500 transition-all hover:shadow-md group"
 						>
-							<div className={`text-${action.color}-600 dark:text-${action.color}-400 mb-4`}>
+							<div
+								className={`text-${action.color}-600 dark:text-${action.color}-400 mb-4`}
+							>
 								<action.icon className="h-8 w-8" />
 							</div>
 							<h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400">

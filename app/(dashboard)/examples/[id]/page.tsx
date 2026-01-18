@@ -78,7 +78,7 @@ export default function ExampleDetailPage() {
 			const data = await response.json();
 			setUpvotes(data.upvotesCount);
 			setVoteStatus(data.voteType);
-		} catch (error) {
+		} catch (_error) {
 			toast.error("Failed to vote. Please try again.");
 		} finally {
 			setVoting(false);

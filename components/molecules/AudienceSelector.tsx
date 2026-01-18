@@ -1,9 +1,16 @@
-import { Baby, Heart, type LucideIcon, Star, Users } from "lucide-react";
+import {
+	Baby,
+	Briefcase,
+	Heart,
+	type LucideIcon,
+	Star,
+	Users,
+} from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { cn } from "@/lib/utils";
 
-export type AudienceType = "parent" | "partner" | "friend" | "child";
+export type AudienceType = "parent" | "partner" | "friend" | "child" | "boss";
 
 interface AudienceSelectorProps {
 	value: AudienceType;
@@ -39,6 +46,12 @@ const audiences: {
 		label: "Child",
 		icon: Baby,
 		description: "Very simple, like for a 5-year-old.",
+	},
+	{
+		id: "boss",
+		label: "Boss",
+		icon: Briefcase,
+		description: "Professional & outcome-focused.",
 	},
 ];
 
