@@ -10,6 +10,9 @@ export const metadata: Metadata = {
 	title: "NonTechSpeak - Simplify Technical Concepts",
 	description:
 		"Transform complex technical jargon into simple, understandable language for any audience",
+	icons: {
+		icon: "/logo/ns-bg-transparant.png",
+	},
 };
 
 export default function RootLayout({

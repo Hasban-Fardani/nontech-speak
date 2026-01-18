@@ -1,6 +1,7 @@
 "use client";
 
 import { Menu } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -28,9 +29,13 @@ export function PublicHeader() {
 	return (
 		<header className="px-4 lg:px-6 h-16 flex items-center border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
 			<Link className="flex items-center justify-center" href="/">
-				<div className="h-8 w-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold mr-2">
-					N
-				</div>
+				<Image
+					src="/logo/ns-bg-transparant.png"
+					alt="Non-Tech Speak Logo"
+					width={32}
+					height={32}
+					className="h-8 w-8 mr-2"
+				/>
 				<span className="font-bold text-xl">Non-Tech Speak</span>
 			</Link>
 
@@ -69,9 +74,13 @@ export function PublicHeader() {
 					<SheetContent side="right">
 						<SheetHeader>
 							<SheetTitle className="text-left flex items-center gap-2">
-								<div className="h-6 w-6 bg-blue-600 rounded flex items-center justify-center text-white text-xs font-bold">
-									N
-								</div>
+								<Image
+									src="/logo/ns-bg-transparant.png"
+									alt="Non-Tech Speak Logo"
+									width={24}
+									height={24}
+									className="h-6 w-6"
+								/>
 								Menu
 							</SheetTitle>
 						</SheetHeader>

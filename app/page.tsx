@@ -1,6 +1,7 @@
 import { ArrowRight, Bot, Brain, Sparkles, Users } from "lucide-react";
 import Link from "next/link";
-import { PublicFeed } from "@/components/organisms/PublicFeed";
+import { LandingExamples } from "@/components/organisms/LandingExamples";
+import { LandingLeaderboard } from "@/components/organisms/LandingLeaderboard";
 import { PublicHeader } from "@/components/organisms/PublicHeader";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -113,6 +114,10 @@ export default function LandingPage() {
 					</div>
 				</section>
 
+				{/* Live Data Sections */}
+				<LandingExamples />
+				<LandingLeaderboard />
+
 				{/* CTA Section */}
 				<section className="w-full py-12 md:py-24 lg:py-32">
 					<div className="container px-4 md:px-6 mx-auto">
@@ -138,8 +143,6 @@ export default function LandingPage() {
 					</div>
 				</section>
 			</main>
-
-			<PublicFeed />
 
 			<footer className="flex flex-col gap-2 sm:flex-row py-6 w-full shrink-0 items-center px-4 md:px-6 border-t">
 				<p className="text-xs text-gray-500 dark:text-gray-400">

@@ -10,6 +10,7 @@ import {
 	Trophy,
 	User,
 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import SignOutButton from "@/components/molecules/SignOutButton";
@@ -70,8 +71,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 					<SidebarMenuItem>
 						<SidebarMenuButton size="lg" asChild>
 							<Link href="/">
-								<div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-blue-600 text-sidebar-primary-foreground">
-									<span className="font-bold text-white">N</span>
+								<div className="flex aspect-square size-8 items-center justify-center rounded-lg text-sidebar-primary-foreground">
+									<Image
+										src="/logo/ns-bg-transparant.png"
+										alt="Non-Tech Speak Logo"
+										width={32}
+										height={32}
+										className="size-8"
+									/>
 								</div>
 								<div className="flex flex-col gap-0.5 leading-none">
 									<span className="font-semibold">Non-Tech Speak</span>
